@@ -32,5 +32,12 @@ public class PersistentAndDetached {
 
         //если же закрытие контекста персистентности перенести ниже - то название в бд будет Post 3
         //entityManager.getTransaction().commit();
+
+        //что делаеть, если нужно обновить состояние обхекта? всё просто - надо использовать метод merge
+        entityManager.getTransaction().begin();
+        //merge используется только для detached объектов
+        entityManager.merge(post);
+
+        entityManager.getTransaction().commit();
     }
 }
