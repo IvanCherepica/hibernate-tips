@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many;
+package com.javahelps.jpa.test.n_plus_1_problem;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -6,36 +6,67 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class _2_Solution1 {
+public class _1_Problem {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
 
+        saveData(entityManager);
+        entityManager.clear();
+        System.out.println();
+        System.out.println("--after saving data--");
+        System.out.println();
+
         entityManager.getTransaction().begin();
 
-        //создаём три ответа; состояние объектов - transient
-        Answer answer1 = new Answer("Answer 1");
-        Answer answer2 = new Answer("Answer 2");
-        Answer answer3 = new Answer("Answer 3");
+        List<Task> tasks = entityManager.createQuery("FROM " + Task.class.getName(), Task.class).getResultList();
 
-        //создаём задачу, тоже transient
-        Task task = new Task("Task 1");
+        entityManager.getTransaction().commit();
 
-        //решение первой проблемы в классе _1_Problem1 заключается в том, что бы первести все обхекты answer в состояние persistent
-        entityManager.persist(answer1);
-        entityManager.persist(answer2);
-        entityManager.persist(answer3);
+        //получаем один дополнительный запрос на каждый task
+        for (Task task : tasks) {
+            System.out.println(task.getTitle());
+            task.getAnswers().forEach(a -> System.out.println(a.getAnswer()));
+        }
+    }
 
-        //вносим изменения в сущность task, в тот момент, когда она ещё transient и не прикреплена к сессии
-        task.getAnswers().add(answer1);
-        task.getAnswers().add(answer2);
-        task.getAnswers().add(answer3);
+    private static void saveData(EntityManager entityManager) {
+        entityManager.getTransaction().begin();
 
-        //переводим объект task в состояние prsist
-        entityManager.persist(task);
+        Task task1 = new Task("Task 1");
+        Task task2 = new Task("Task 2");
+        Task task3 = new Task("Task 3");
 
-        //Теперь всё хорошо, транзакция комитится - все изменения заходят в базу
+        Answer answer1 = new Answer("Answer1");
+        Answer answer2 = new Answer("Answer2");
+        Answer answer3 = new Answer("Answer3");
+
+        Answer answer4 = new Answer("Answer4");
+        Answer answer5 = new Answer("Answer5");
+        Answer answer6 = new Answer("Answer6");
+
+        Answer answer7 = new Answer("Answer7");
+        Answer answer8 = new Answer("Answer8");
+        Answer answer9 = new Answer("Answer9");
+
+        entityManager.persist(task1);
+        entityManager.persist(task2);
+        entityManager.persist(task3);
+
+        task1.addAnswer(answer1);
+        task1.addAnswer(answer2);
+        task1.addAnswer(answer3);
+
+        task2.addAnswer(answer4);
+        task2.addAnswer(answer5);
+        task2.addAnswer(answer6);
+
+        task3.addAnswer(answer7);
+        task3.addAnswer(answer8);
+        task3.addAnswer(answer9);
+
         entityManager.getTransaction().commit();
     }
+
 
     @Entity
     @Table(name = "task")
@@ -46,7 +77,7 @@ public class _2_Solution1 {
 
         private String title;
 
-        @OneToMany
+        @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
         private List<Answer> answers = new ArrayList<>();
 
         public Task(String title) {
@@ -72,6 +103,17 @@ public class _2_Solution1 {
             this.title = title;
         }
 
+        //заводим специальные методы для добавления и удаления, которые позволяют избавиться от повторного кода
+        public void addAnswer(Answer answer) {
+            this.answers.add(answer);
+            answer.setTask(this);
+        }
+
+        public void removeAnswer(Answer answer) {
+            this.answers.remove(answer);
+            answer.setTask(null);
+        }
+
         public List<Answer> getAnswers() {
             return answers;
         }
@@ -85,7 +127,6 @@ public class _2_Solution1 {
             return "Task{" +
                     "id=" + id +
                     ", title='" + title + '\'' +
-                    ", answers=" + answers +
                     '}';
         }
     }
@@ -99,7 +140,8 @@ public class _2_Solution1 {
 
         private String answer;
 
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "answer_id")
         private Task task;
 
         public Answer(String answer) {

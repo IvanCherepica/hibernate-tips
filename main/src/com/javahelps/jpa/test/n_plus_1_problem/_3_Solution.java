@@ -1,60 +1,77 @@
-package com.javahelps.jpa.test.one_to_many;
+package com.javahelps.jpa.test.n_plus_1_problem;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class _8_Cascade {
+public class _3_Solution {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
 
-        saveTaskWithAnswers(entityManager);
-
-        //начинаем новую транзакцию
-        entityManager.getTransaction().begin();
-
-        //достём из базы задачу с id = 1
-        Task task = entityManager.find(Task.class, 1L);
-
-        entityManager.getTransaction().commit();
-
-        //теперь всё работает
-        System.out.println(task.getAnswers());
-
+        saveData(entityManager);
+        entityManager.clear();
+        System.out.println();
+        System.out.println("--after saving data--");
+        System.out.println();
 
         entityManager.getTransaction().begin();
 
-        Answer answer = entityManager.find(Answer.class, 1L);
+        List<Task> tasks = entityManager.createQuery("FROM " + Task.class.getName(), Task.class).getResultList();
 
         entityManager.getTransaction().commit();
 
-        //и здесь
-        System.out.println(answer.getTask());
-
+        //получаем один дополнительный запрос на каждый task
+        for (Task task : tasks) {
+            System.out.println(task.getTitle());
+            task.getAnswers().forEach(a -> System.out.println(a.getAnswer()));
+        }
     }
 
-    private static void saveTaskWithAnswers(EntityManager entityManager) {
+    private static void saveData(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
-        //создаём три ответа; состояние объектов - transient
-        Answer answer1 = new Answer("Answer 1");
-        Answer answer2 = new Answer("Answer 2");
-        Answer answer3 = new Answer("Answer 3");
+        Task task1 = new Task("Task 1");
+        Task task2 = new Task("Task 2");
+        Task task3 = new Task("Task 3");
 
-        //создаём задачу, тоже transient
-        Task task = new Task("Task 1");
+        Answer answer1 = new Answer("Answer1");
+        Answer answer2 = new Answer("Answer2");
+        Answer answer3 = new Answer("Answer3");
 
-        //теперь, благодаря использовании каскадов - убирается лишний код
-        task.addAnswer(answer1);
-        task.addAnswer(answer2);
-        task.addAnswer(answer3);
+        Answer answer4 = new Answer("Answer4");
+        Answer answer5 = new Answer("Answer5");
+        Answer answer6 = new Answer("Answer6");
 
-        entityManager.persist(task);
+        Answer answer7 = new Answer("Answer7");
+        Answer answer8 = new Answer("Answer8");
+        Answer answer9 = new Answer("Answer9");
+
+        entityManager.persist(task1);
+        entityManager.persist(task2);
+        entityManager.persist(task3);
+
+        task1.addAnswer(answer1);
+        task1.addAnswer(answer2);
+        task1.addAnswer(answer3);
+
+        task2.addAnswer(answer4);
+        task2.addAnswer(answer5);
+        task2.addAnswer(answer6);
+
+        task3.addAnswer(answer7);
+        task3.addAnswer(answer8);
+        task3.addAnswer(answer9);
 
         entityManager.getTransaction().commit();
     }
+
 
     @Entity
     @Table(name = "task")
@@ -65,8 +82,10 @@ public class _8_Cascade {
 
         private String title;
 
-        @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
-        private List<Answer> answers = new ArrayList<>();
+        @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+//        @Fetch(FetchMode.SUBSELECT)
+        @BatchSize(size = 10)
+        private Set<Answer> answers = new HashSet<>();
 
         public Task(String title) {
             this.title = title;
@@ -102,11 +121,11 @@ public class _8_Cascade {
             answer.setTask(null);
         }
 
-        public List<Answer> getAnswers() {
+        public Set<Answer> getAnswers() {
             return answers;
         }
 
-        public void setAnswers(List<Answer> answers) {
+        public void setAnswers(Set<Answer> answers) {
             this.answers = answers;
         }
 
@@ -128,7 +147,7 @@ public class _8_Cascade {
 
         private String answer;
 
-        @ManyToOne
+        @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "answer_id")
         private Task task;
 

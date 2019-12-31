@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many;
+package com.javahelps.jpa.test.one_to_many.bidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class _5_JoinColumnSolution {
+public class _3_Problem2 {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
 
@@ -31,8 +31,8 @@ public class _5_JoinColumnSolution {
 
         entityManager.getTransaction().commit();
 
-        //от дополнительной таблицы мы избавились, однако, это не улучшило картину с персистентностью данных
-        //как и прежде - мы не имеем никакой возможности сохранить наши связи в бау
+        //помимо того, что создание дополнительной таблицы замедляет общую скорость работы приложения
+        //мы, в довесок, не можем получить из answer задачу
         System.out.println(answer.getTask());
 
     }
@@ -58,9 +58,10 @@ public class _5_JoinColumnSolution {
         task.getAnswers().add(answer2);
         task.getAnswers().add(answer3);
 
-        //переводим объект task в состояние persist
+        //переводим объект task в состояние prsist
         entityManager.persist(task);
 
+        //Теперь всё хорошо, транзакция комитится - все изменения заходят в базу
         entityManager.getTransaction().commit();
     }
 
@@ -73,7 +74,7 @@ public class _5_JoinColumnSolution {
 
         private String title;
 
-        @OneToMany(mappedBy = "task")
+        @OneToMany
         private List<Answer> answers = new ArrayList<>();
 
         public Task(String title) {
@@ -127,7 +128,6 @@ public class _5_JoinColumnSolution {
         private String answer;
 
         @ManyToOne
-        @JoinColumn(name = "answer_id")
         private Task task;
 
         public Answer(String answer) {

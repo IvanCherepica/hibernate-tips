@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many;
+package com.javahelps.jpa.test.one_to_many.bidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class _7_Pattern {
+public class _9_Problem3 {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
 
@@ -17,22 +17,28 @@ public class _7_Pattern {
 
         //достём из базы задачу с id = 1
         Task task = entityManager.find(Task.class, 1L);
+        Answer answer = task.getAnswers().get(0);
+
+        task.removeAnswer(answer);
 
         entityManager.getTransaction().commit();
 
-        //теперь всё работает
+//      все хорошо, сущность первого ответа теперь никак не связана с задчей
+//      Однако теперь она лежит мёртвым грузом в бд
         System.out.println(task.getAnswers());
 
 
         entityManager.getTransaction().begin();
 
-        Answer answer = entityManager.find(Answer.class, 1L);
+        List<Answer> answers = entityManager.createQuery("SELECT a FROM "+ Answer.class.getName() +" a", Answer.class).getResultList();
 
         entityManager.getTransaction().commit();
 
-        //и здесь
-        System.out.println(answer.getTask());
-
+        //для примера - попробуем вывести имена всех задач, к которым были прикриплены ответы
+        //резонно получим npe
+        for (Answer answerFromList : answers) {
+            System.out.println(answerFromList.getTask().getTitle());
+        }
     }
 
     private static void saveTaskWithAnswers(EntityManager entityManager) {
@@ -46,16 +52,12 @@ public class _7_Pattern {
         //создаём задачу, тоже transient
         Task task = new Task("Task 1");
 
-        entityManager.persist(task);
-
-        //код стал немного понятнее - но от лишнего кода мы так и не смогли избавиться
+        //теперь, благодаря использовании каскадов - убирается лишний код
         task.addAnswer(answer1);
         task.addAnswer(answer2);
         task.addAnswer(answer3);
 
-        entityManager.persist(answer1);
-        entityManager.persist(answer2);
-        entityManager.persist(answer3);
+        entityManager.persist(task);
 
         entityManager.getTransaction().commit();
     }
@@ -69,7 +71,7 @@ public class _7_Pattern {
 
         private String title;
 
-        @OneToMany(mappedBy = "task")
+        @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
         private List<Answer> answers = new ArrayList<>();
 
         public Task(String title) {

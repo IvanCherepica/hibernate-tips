@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many;
+package com.javahelps.jpa.test.one_to_many.bidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class _3_Problem2 {
+public class _7_Pattern {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
 
@@ -20,8 +20,7 @@ public class _3_Problem2 {
 
         entityManager.getTransaction().commit();
 
-        //проблема: как мы видим task во всех трёх сущностях null. где же тогда сохранились связи?
-        //связи сохранились в таблице task_answer, которую хибернейт создал самостоятельно, для организации many2one
+        //теперь всё работает
         System.out.println(task.getAnswers());
 
 
@@ -31,8 +30,7 @@ public class _3_Problem2 {
 
         entityManager.getTransaction().commit();
 
-        //помимо того, что создание дополнительной таблицы замедляет общую скорость работы приложения
-        //мы, в довесок, не можем получить из answer задачу
+        //и здесь
         System.out.println(answer.getTask());
 
     }
@@ -48,20 +46,17 @@ public class _3_Problem2 {
         //создаём задачу, тоже transient
         Task task = new Task("Task 1");
 
-        //решение первой проблемы в классе _1_Problem1 заключается в том, что бы первести все обхекты answer в состояние persistent
+        entityManager.persist(task);
+
+        //код стал немного понятнее - но от лишнего кода мы так и не смогли избавиться
+        task.addAnswer(answer1);
+        task.addAnswer(answer2);
+        task.addAnswer(answer3);
+
         entityManager.persist(answer1);
         entityManager.persist(answer2);
         entityManager.persist(answer3);
 
-        //вносим изменения в сущность task, в тот момент, когда она ещё transient и не прикреплена к сессии
-        task.getAnswers().add(answer1);
-        task.getAnswers().add(answer2);
-        task.getAnswers().add(answer3);
-
-        //переводим объект task в состояние prsist
-        entityManager.persist(task);
-
-        //Теперь всё хорошо, транзакция комитится - все изменения заходят в базу
         entityManager.getTransaction().commit();
     }
 
@@ -74,7 +69,7 @@ public class _3_Problem2 {
 
         private String title;
 
-        @OneToMany
+        @OneToMany(mappedBy = "task")
         private List<Answer> answers = new ArrayList<>();
 
         public Task(String title) {
@@ -100,6 +95,17 @@ public class _3_Problem2 {
             this.title = title;
         }
 
+        //заводим специальные методы для добавления и удаления, которые позволяют избавиться от повторного кода
+        public void addAnswer(Answer answer) {
+            this.answers.add(answer);
+            answer.setTask(this);
+        }
+
+        public void removeAnswer(Answer answer) {
+            this.answers.remove(answer);
+            answer.setTask(null);
+        }
+
         public List<Answer> getAnswers() {
             return answers;
         }
@@ -113,7 +119,6 @@ public class _3_Problem2 {
             return "Task{" +
                     "id=" + id +
                     ", title='" + title + '\'' +
-                    ", answers=" + answers +
                     '}';
         }
     }
@@ -128,6 +133,7 @@ public class _3_Problem2 {
         private String answer;
 
         @ManyToOne
+        @JoinColumn(name = "answer_id")
         private Task task;
 
         public Answer(String answer) {

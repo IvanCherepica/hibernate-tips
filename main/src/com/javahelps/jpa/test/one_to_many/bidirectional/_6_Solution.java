@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many;
+package com.javahelps.jpa.test.one_to_many.bidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 

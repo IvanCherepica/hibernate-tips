@@ -17,7 +17,7 @@ public class PersistentHelper {
     public static EntityManager getEntityManager(Class[] persistentClasses) {
         Map<String, Object> options = new HashMap<>();
         options.put(DRIVER, "com.mysql.jdbc.Driver");
-        options.put(URL, "jdbc:mysql://localhost:3306/world?characterEncoding=UTF-8&useUnicode=true&useSSL=false&serverTimezone=UTC");
+        options.put(URL, "jdbc:mysql://localhost:3306/hibernate_examples?characterEncoding=UTF-8&useUnicode=true&useSSL=false&serverTimezone=UTC");
         options.put(DIALECT, "org.hibernate.dialect.MySQL5Dialect");
         options.put(USER, "root");
         options.put(PASS, "root");

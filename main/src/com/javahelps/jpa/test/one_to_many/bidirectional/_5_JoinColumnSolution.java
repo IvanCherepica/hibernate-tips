@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many;
+package com.javahelps.jpa.test.one_to_many.bidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class _10_Solution3 {
+public class _5_JoinColumnSolution {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
 
@@ -17,28 +17,24 @@ public class _10_Solution3 {
 
         //достём из базы задачу с id = 1
         Task task = entityManager.find(Task.class, 1L);
-        Answer answer = task.getAnswers().get(0);
-
-        //теперь, заиспользовав orphanRemoval = true мы говорим хибернейту, что осиротевшую сущность нужно удалить
-        task.removeAnswer(answer);
 
         entityManager.getTransaction().commit();
 
-//      все хорошо, сущность первого ответа теперь никак не связана с задчей
-//      Однако теперь она лежит мёртвым грузом в бд
+        //проблема: как мы видим task во всех трёх сущностях null. где же тогда сохранились связи?
+        //связи сохранились в таблице task_answer, которую хибернейт создал самостоятельно, для организации many2one
         System.out.println(task.getAnswers());
 
 
         entityManager.getTransaction().begin();
 
-        List<Answer> answers = entityManager.createQuery("SELECT a FROM "+ Answer.class.getName() +" a", Answer.class).getResultList();
+        Answer answer = entityManager.find(Answer.class, 1L);
 
         entityManager.getTransaction().commit();
 
-        //теперь в листе мы имеем только два ответа; ответ, для которого была удалена задача - был стёрт автоматически из базы
-        for (Answer answerFromList : answers) {
-            System.out.println(answerFromList.getTask().getTitle());
-        }
+        //от дополнительной таблицы мы избавились, однако, это не улучшило картину с персистентностью данных
+        //как и прежде - мы не имеем никакой возможности сохранить наши связи в бау
+        System.out.println(answer.getTask());
+
     }
 
     private static void saveTaskWithAnswers(EntityManager entityManager) {
@@ -52,11 +48,17 @@ public class _10_Solution3 {
         //создаём задачу, тоже transient
         Task task = new Task("Task 1");
 
-        //теперь, благодаря использовании каскадов - убирается лишний код
-        task.addAnswer(answer1);
-        task.addAnswer(answer2);
-        task.addAnswer(answer3);
+        //решение первой проблемы в классе _1_Problem1 заключается в том, что бы первести все обхекты answer в состояние persistent
+        entityManager.persist(answer1);
+        entityManager.persist(answer2);
+        entityManager.persist(answer3);
 
+        //вносим изменения в сущность task, в тот момент, когда она ещё transient и не прикреплена к сессии
+        task.getAnswers().add(answer1);
+        task.getAnswers().add(answer2);
+        task.getAnswers().add(answer3);
+
+        //переводим объект task в состояние persist
         entityManager.persist(task);
 
         entityManager.getTransaction().commit();
@@ -71,7 +73,7 @@ public class _10_Solution3 {
 
         private String title;
 
-        @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+        @OneToMany(mappedBy = "task")
         private List<Answer> answers = new ArrayList<>();
 
         public Task(String title) {
@@ -97,17 +99,6 @@ public class _10_Solution3 {
             this.title = title;
         }
 
-        //заводим специальные методы для добавления и удаления, которые позволяют избавиться от повторного кода
-        public void addAnswer(Answer answer) {
-            this.answers.add(answer);
-            answer.setTask(this);
-        }
-
-        public void removeAnswer(Answer answer) {
-            this.answers.remove(answer);
-            answer.setTask(null);
-        }
-
         public List<Answer> getAnswers() {
             return answers;
         }
@@ -121,6 +112,7 @@ public class _10_Solution3 {
             return "Task{" +
                     "id=" + id +
                     ", title='" + title + '\'' +
+                    ", answers=" + answers +
                     '}';
         }
     }
@@ -134,7 +126,7 @@ public class _10_Solution3 {
 
         private String answer;
 
-        @ManyToOne(fetch = FetchType.LAZY)
+        @ManyToOne
         @JoinColumn(name = "answer_id")
         private Task task;
 
