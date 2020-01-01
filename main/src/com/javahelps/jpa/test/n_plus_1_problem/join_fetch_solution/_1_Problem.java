@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.n_plus_1_problem;
+package com.javahelps.jpa.test.n_plus_1_problem.join_fetch_solution;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -6,7 +6,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class _2_Solution {
+public class _1_Problem {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
 
@@ -18,16 +18,15 @@ public class _2_Solution {
 
         entityManager.getTransaction().begin();
 
-        //используя join fetch - просим хибернейт сразу загрузить все данные одним запросом
-        List<Task> tasks = entityManager.createQuery("FROM " + Task.class.getName() + " t JOIN FETCH t.answers", Task.class).getResultList();
+        List<Task> tasks = entityManager.createQuery("FROM " + Task.class.getName(), Task.class).getResultList();
 
         entityManager.getTransaction().commit();
 
+        //получаем один дополнительный запрос на каждый task
         for (Task task : tasks) {
             System.out.println(task.getTitle());
             task.getAnswers().forEach(a -> System.out.println(a.getAnswer()));
         }
-
     }
 
     private static void saveData(EntityManager entityManager) {

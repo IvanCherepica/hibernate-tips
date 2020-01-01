@@ -19,17 +19,36 @@ public class FetchModeJoin {
         saveData(entityManager);
         entityManager.clear();
 
-        {//если мы достаём запись из базы, используя метод entitymanager, то срабатывает загрузка и данные достаются одним запросом; без n+1
+        {//использование FetchMode.JOIN равносильно использованию FetchType.EAGER
+            //данные будут подругжаться принудительно, даже если в них нет необходимости
             entityManager.getTransaction().begin();
 
             System.out.println();
-            System.out.println("Before one stock select");
+            System.out.println("Before one stock select without collection call");
             System.out.println();
 
             Stock stock = entityManager.find(Stock.class, 1L);
 
             System.out.println();
-            System.out.println("After one stock select");
+            System.out.println("After one stock select without collection call");
+            System.out.println();
+
+            entityManager.getTransaction().commit();
+        }
+
+        entityManager.clear();
+
+        {//если мы достаём запись из базы, используя метод entitymanager, то срабатывает загрузка и данные достаются одним запросом; без n+1
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before one stock select with collection call");
+            System.out.println();
+
+            Stock stock = entityManager.find(Stock.class, 1L);
+
+            System.out.println();
+            System.out.println("After one stock select with collection call");
             System.out.println();
 
             for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
@@ -152,7 +171,7 @@ public class FetchModeJoin {
         @GeneratedValue
         private long id;
 
-        @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+        @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
         @Fetch(FetchMode.JOIN)
         private Set<StockDailyRecord> stockDailyRecords = new HashSet<>();
 

@@ -90,6 +90,33 @@ public class FetchSelectBatchSize {
 
             entityManager.getTransaction().commit();
         }
+
+        entityManager.clear();
+
+        {//та же самая история происхоит при использовании нативных запросов
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before list native select");
+            System.out.println();
+
+            List<Stock> list = entityManager.createNativeQuery("SELECT * FROM stock", Stock.class).getResultList();
+
+            System.out.println();
+            System.out.println("After list  native select");
+            System.out.println();
+
+            for (Stock stock : list) {
+
+                for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
+                    System.out.println(stockDailyRecord.getId());
+                }
+
+            }
+
+            entityManager.getTransaction().commit();
+        }
+
     }
 
     private static void saveData(EntityManager entityManager) {

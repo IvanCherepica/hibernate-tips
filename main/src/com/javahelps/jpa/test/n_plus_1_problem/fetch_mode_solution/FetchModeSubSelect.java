@@ -1,47 +1,85 @@
-package com.javahelps.jpa.test.n_plus_1_problem.mkyong_ex;
+package com.javahelps.jpa.test.n_plus_1_problem.fetch_mode_solution;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
-import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-public class BatchSizeEx {
+public class FetchModeSubSelect {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[]{Stock.class, StockDailyRecord.class});
 
         saveData(entityManager);
         entityManager.clear();
 
-        entityManager.getTransaction().begin();
+        {//при использовании ленивой загрузки мы лишаемся необходимости каждый раз загружать в память всю информацию
+            entityManager.getTransaction().begin();
 
-        System.out.println();
-        System.out.println("Before select");
-        System.out.println();
+            System.out.println();
+            System.out.println("Before one stock select without collection call");
+            System.out.println();
 
-        List<Stock> list = entityManager.createQuery("from " + Stock.class.getName(), Stock.class).getResultList();
+            Stock stock = entityManager.find(Stock.class, 1L);
 
-        System.out.println();
-        System.out.println("After select");
-        System.out.println();
+            System.out.println();
+            System.out.println("After one stock select without collection call");
+            System.out.println();
 
-//        for(Stock stock : list){
-//
-//            Set sets = stock.getStockDailyRecords();
-//
-//            for (Iterator iter = sets.iterator(); iter.hasNext(); ) {
-//                StockDailyRecord sdr = (StockDailyRecord) iter.next();
-//                System.out.println(sdr.getId());
-//            }
-//        }
+            entityManager.getTransaction().commit();
+        }
 
-        entityManager.getTransaction().commit();
+        entityManager.clear();
+
+        {//используя FetchMode.SUBSELECT мы и на таком запросе приобретаем один дополнительный запрос
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before one stock select");
+            System.out.println();
+
+            Stock stock = entityManager.find(Stock.class, 1L);
+
+            System.out.println();
+            System.out.println("After one stock select");
+            System.out.println();
+
+            for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
+                System.out.println(stockDailyRecord.getId());
+            }
+
+            entityManager.getTransaction().commit();
+        }
+
+        entityManager.clear();
+
+        {//однако, если запросов на загрузку коллекций у нас много - то subselect объеденит их в один. в итоге устранив n+1
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before list select");
+            System.out.println();
+
+            List<Stock> list = entityManager.createQuery("from " + Stock.class.getName(), Stock.class).getResultList();
+
+            System.out.println();
+            System.out.println("After list select");
+            System.out.println();
+
+            for (Stock stock : list) {
+
+                for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
+                    System.out.println(stockDailyRecord.getId());
+                }
+
+            }
+
+            entityManager.getTransaction().commit();
+        }
     }
 
     private static void saveData(EntityManager entityManager) {
@@ -131,8 +169,7 @@ public class BatchSizeEx {
         private long id;
 
         @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-//        @Fetch(FetchMode.JOIN)
-        @BatchSize(size = 10)
+        @Fetch(FetchMode.SUBSELECT)
         private Set<StockDailyRecord> stockDailyRecords = new HashSet<>();
 
         public Stock() {

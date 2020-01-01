@@ -20,7 +20,25 @@ public class FetchModeSelect {
         saveData(entityManager);
         entityManager.clear();
 
-        {//если мы достаём запись из базы, используя метод entitymanager, то срабатывает загрузка и данные достаются одним запросом; без n+1
+        {//при использовании ленивой загрузки мы лишаемся необходимости каждый раз загружать в память всю информацию
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before one stock select without collection call");
+            System.out.println();
+
+            Stock stock = entityManager.find(Stock.class, 1L);
+
+            System.out.println();
+            System.out.println("After one stock select without collection call");
+            System.out.println();
+
+            entityManager.getTransaction().commit();
+        }
+
+        entityManager.clear();
+
+        {//но, используя FetchMode.SELECT мы терпим утечку бастродействия даже на таких простых запросах. Уже здесь будет n+1
             entityManager.getTransaction().begin();
 
             System.out.println();
@@ -42,7 +60,7 @@ public class FetchModeSelect {
 
         entityManager.clear();
 
-        {
+        {//о более комплексных запросах смысла говорить тоже нет - везде n+1
             entityManager.getTransaction().begin();
 
             System.out.println();
