@@ -59,7 +59,7 @@ public class _1_Problem {
 
     @Entity(name = "Post")
     @Table(name = "post")
-    public static class Post {
+    private static class Post {
 
         @Id
         @GeneratedValue
@@ -125,7 +125,7 @@ public class _1_Problem {
 
     @Entity(name = "Tag")
     @Table(name = "tag")
-    public static class Tag {
+    private static class Tag {
 
         @Id
         @GeneratedValue

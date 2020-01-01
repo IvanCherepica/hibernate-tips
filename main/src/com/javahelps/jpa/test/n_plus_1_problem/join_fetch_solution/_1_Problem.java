@@ -70,7 +70,7 @@ public class _1_Problem {
 
     @Entity
     @Table(name = "task")
-    static class Task {
+    private static class Task {
         @Id
         @GeneratedValue
         private long id;
@@ -133,7 +133,7 @@ public class _1_Problem {
 
     @Entity
     @Table(name = "answer")
-    static class Answer {
+    private static class Answer {
         @Id
         @GeneratedValue
         private long id;

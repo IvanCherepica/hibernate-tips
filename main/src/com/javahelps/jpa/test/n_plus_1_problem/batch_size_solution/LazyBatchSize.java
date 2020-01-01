@@ -175,7 +175,7 @@ public class LazyBatchSize {
 
     @Entity
     @Table(name = "stock_daily_record")
-    public static class StockDailyRecord {
+    private static class StockDailyRecord {
         @Id
         @GeneratedValue
         private long id;
@@ -195,7 +195,7 @@ public class LazyBatchSize {
 
     @Entity
     @Table(name = "stock")
-    public static class Stock implements Serializable {
+    private static class Stock implements Serializable {
 
         @Id
         @GeneratedValue
