@@ -3,10 +3,7 @@ package com.javahelps.jpa.test.entity_graph_example;
 import com.javahelps.jpa.test.util.PersistentHelper;
 
 import javax.persistence.*;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class DynamicSubGraphExample {
     public static void main(String[] args) {
@@ -56,6 +53,58 @@ public class DynamicSubGraphExample {
             System.out.println();
             System.out.println("After select with graph");
             System.out.println();
+        }
+
+        entityManager.clear();
+
+
+        {//используя метод addSubgraph мы просим хибернейт выгрузить все свяаннаые с item product
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before query select with graph");
+            System.out.println();
+
+            EntityGraph<Order> entityGraph = entityManager.createEntityGraph(Order.class);
+            Subgraph<OrderItem> itemGraph = entityGraph.addSubgraph("items");
+            itemGraph.addAttributeNodes("product");
+
+            List<Order> order = entityManager.createQuery("FROM " + Order.class.getName(), Order.class)
+                    .setHint("javax.persistence.loadgraph", entityGraph)
+                    .getResultList();
+
+            entityManager.getTransaction().commit();
+
+            System.out.println();
+            System.out.println("After query select with graph");
+            System.out.println();
+
+            System.out.println(order.get(0).getItems());
+        }
+
+        entityManager.clear();
+
+        {//ничего из этого не сработает на нативных запросах
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before query select with graph");
+            System.out.println();
+
+            EntityGraph<Order> entityGraph = entityManager.createEntityGraph(Order.class);
+            Subgraph<OrderItem> itemGraph = entityGraph.addSubgraph("items");
+            itemGraph.addAttributeNodes("product");
+
+            List<Order> order = entityManager.createNativeQuery("SELECT * FROM purchaseOrder", Order.class)
+                    .getResultList();
+
+            entityManager.getTransaction().commit();
+
+            System.out.println();
+            System.out.println("After query select with graph");
+            System.out.println();
+
+            System.out.println(order.get(0).getItems());
         }
 
 
