@@ -24,7 +24,7 @@ public class FetchModeSubSelect {
             System.out.println("Before one stock select without collection call");
             System.out.println();
 
-            Stock stock = entityManager.find(Stock.class, 1L);
+            StockDailyRecord stockDailyRecord = entityManager.find(StockDailyRecord.class, 1L);
 
             System.out.println();
             System.out.println("After one stock select without collection call");
@@ -42,15 +42,13 @@ public class FetchModeSubSelect {
             System.out.println("Before one stock select");
             System.out.println();
 
-            Stock stock = entityManager.find(Stock.class, 1L);
+            StockDailyRecord stockDailyRecord = entityManager.find(StockDailyRecord.class, 1L);
 
             System.out.println();
             System.out.println("After one stock select");
             System.out.println();
 
-            for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
-                System.out.println(stockDailyRecord.getId());
-            }
+            System.out.println(stockDailyRecord.getStock());
 
             entityManager.getTransaction().commit();
         }
@@ -64,17 +62,15 @@ public class FetchModeSubSelect {
             System.out.println("Before list select");
             System.out.println();
 
-            List<Stock> list = entityManager.createQuery("from " + Stock.class.getName(), Stock.class).getResultList();
+            List<StockDailyRecord> list = entityManager.createQuery("from " + StockDailyRecord.class.getName(), StockDailyRecord.class).getResultList();
 
             System.out.println();
             System.out.println("After list select");
             System.out.println();
 
-            for (Stock stock : list) {
+            for (StockDailyRecord stockDailyRecord : list) {
 
-                for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
-                    System.out.println(stockDailyRecord.getId());
-                }
+                System.out.println(stockDailyRecord.getStock());
 
             }
 
@@ -117,24 +113,17 @@ public class FetchModeSubSelect {
         entityManager.persist(stock2);
         entityManager.persist(stock3);
 
-        Set<StockDailyRecord> stockDailyRecords1 = new HashSet<>();
-        stockDailyRecords1.add(stockDailyRecord1);
-        stockDailyRecords1.add(stockDailyRecord2);
-        stockDailyRecords1.add(stockDailyRecord3);
+        stockDailyRecord1.setStock(stock1);
+        stockDailyRecord2.setStock(stock1);
+        stockDailyRecord3.setStock(stock1);
 
-        Set<StockDailyRecord> stockDailyRecords2 = new HashSet<>();
-        stockDailyRecords2.add(stockDailyRecord4);
-        stockDailyRecords2.add(stockDailyRecord5);
-        stockDailyRecords2.add(stockDailyRecord6);
+        stockDailyRecord4.setStock(stock2);
+        stockDailyRecord5.setStock(stock2);
+        stockDailyRecord6.setStock(stock2);
 
-        Set<StockDailyRecord> stockDailyRecords3 = new HashSet<>();
-        stockDailyRecords3.add(stockDailyRecord7);
-        stockDailyRecords3.add(stockDailyRecord8);
-        stockDailyRecords3.add(stockDailyRecord9);
-
-        stock1.setStockDailyRecords(stockDailyRecords1);
-        stock2.setStockDailyRecords(stockDailyRecords2);
-        stock3.setStockDailyRecords(stockDailyRecords3);
+        stockDailyRecord7.setStock(stock3);
+        stockDailyRecord8.setStock(stock3);
+        stockDailyRecord9.setStock(stock3);
 
         entityManager.getTransaction().commit();
     }
@@ -147,6 +136,11 @@ public class FetchModeSubSelect {
         @GeneratedValue
         private long id;
 
+        @ManyToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "stock_id")
+        @Fetch(FetchMode.SUBSELECT)
+        private Stock stock;
+
         public StockDailyRecord() {
         }
 
@@ -158,6 +152,13 @@ public class FetchModeSubSelect {
             this.id = id;
         }
 
+        public Stock getStock() {
+            return stock;
+        }
+
+        public void setStock(Stock stock) {
+            this.stock = stock;
+        }
     }
 
     @Entity
@@ -168,10 +169,6 @@ public class FetchModeSubSelect {
         @GeneratedValue
         private long id;
 
-        @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-        @Fetch(FetchMode.SUBSELECT)
-        private Set<StockDailyRecord> stockDailyRecords = new HashSet<>();
-
         public Stock() {
         }
 
@@ -179,12 +176,5 @@ public class FetchModeSubSelect {
             this.id = id;
         }
 
-        public Set<StockDailyRecord> getStockDailyRecords() {
-            return this.stockDailyRecords;
-        }
-
-        public void setStockDailyRecords(Set<StockDailyRecord> stockDailyRecords) {
-            this.stockDailyRecords = stockDailyRecords;
-        }
     }
 }

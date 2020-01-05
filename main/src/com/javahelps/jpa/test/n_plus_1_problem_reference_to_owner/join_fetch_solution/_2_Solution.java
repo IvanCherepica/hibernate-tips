@@ -18,16 +18,15 @@ public class _2_Solution {
 
         entityManager.getTransaction().begin();
 
-        //используя join fetch - просим хибернейт сразу загрузить все данные одним запросом
-        List<Task> tasks = entityManager.createQuery("FROM " + Task.class.getName() + " t JOIN FETCH t.answers", Task.class).getResultList();
+        List<Answer> answers = entityManager.createQuery("FROM " + Answer.class.getName() + " a JOIN FETCH a.task", Answer.class).getResultList();
 
         entityManager.getTransaction().commit();
 
-        for (Task task : tasks) {
-            System.out.println(task.getTitle());
-            task.getAnswers().forEach(a -> System.out.println(a.getAnswer()));
+        //получаем один дополнительный запрос на каждый answer
+        for (Answer answer : answers) {
+            System.out.println(answer.getAnswer());
+            System.out.println(answer.getTask());
         }
-
     }
 
     private static void saveData(EntityManager entityManager) {
@@ -53,17 +52,27 @@ public class _2_Solution {
         entityManager.persist(task2);
         entityManager.persist(task3);
 
-        task1.addAnswer(answer1);
-        task1.addAnswer(answer2);
-        task1.addAnswer(answer3);
+        entityManager.persist(answer1);
+        entityManager.persist(answer2);
+        entityManager.persist(answer3);
+        entityManager.persist(answer4);
+        entityManager.persist(answer5);
+        entityManager.persist(answer6);
+        entityManager.persist(answer7);
+        entityManager.persist(answer8);
+        entityManager.persist(answer9);
 
-        task2.addAnswer(answer4);
-        task2.addAnswer(answer5);
-        task2.addAnswer(answer6);
+        answer1.setTask(task1);
+        answer2.setTask(task1);
+        answer3.setTask(task1);
 
-        task3.addAnswer(answer7);
-        task3.addAnswer(answer8);
-        task3.addAnswer(answer9);
+        answer4.setTask(task2);
+        answer5.setTask(task2);
+        answer6.setTask(task2);
+
+        answer7.setTask(task3);
+        answer8.setTask(task3);
+        answer9.setTask(task3);
 
         entityManager.getTransaction().commit();
     }
@@ -77,9 +86,6 @@ public class _2_Solution {
         private long id;
 
         private String title;
-
-        @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
-        private List<Answer> answers = new ArrayList<>();
 
         public Task(String title) {
             this.title = title;
@@ -102,25 +108,6 @@ public class _2_Solution {
 
         public void setTitle(String title) {
             this.title = title;
-        }
-
-        //заводим специальные методы для добавления и удаления, которые позволяют избавиться от повторного кода
-        public void addAnswer(Answer answer) {
-            this.answers.add(answer);
-            answer.setTask(this);
-        }
-
-        public void removeAnswer(Answer answer) {
-            this.answers.remove(answer);
-            answer.setTask(null);
-        }
-
-        public List<Answer> getAnswers() {
-            return answers;
-        }
-
-        public void setAnswers(List<Answer> answers) {
-            this.answers = answers;
         }
 
         @Override
@@ -180,7 +167,6 @@ public class _2_Solution {
         public String toString() {
             return "Answer{" +
                     "id=" + id +
-                    ", answer='" + answer + '\'' +
                     ", task=" + task +
                     '}';
         }

@@ -50,8 +50,7 @@ public class _5_HibernateSpecificMapping {
             entityManager.getTransaction().commit();
         }
 
-        {//используя sqlresultmapping, даже при получении листа bjects мы можем иметь к загруженным данным доступ
-            //из кэша первого уровня
+        {
             entityManager.getTransaction().begin();
 
             System.out.println();
