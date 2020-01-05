@@ -1,6 +1,7 @@
 package com.javahelps.jpa.test.result_set_mapping_to_entity;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
+import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.type.StandardBasicTypes;
 
@@ -90,6 +91,40 @@ public class _5_HibernateSpecificMapping {
             System.out.println();
             System.out.println("After joined query");
             System.out.println();
+
+            entityManager.getTransaction().commit();
+        }
+
+        entityManager.clear();
+
+        {//используя addJoin и DISTINCT_ROOT_ENTITY - можно сказать хибернейту, что он должен взять данные из полученного резалтсета
+            //и преобразовать алиас s в класс Stock, затем заджойнить его с sdr
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before list select");
+            System.out.println();
+
+//
+            List<Book> results = ((Session)entityManager.getDelegate())
+                    .createSQLQuery(
+                            "SELECT {b.*}, {a.*} FROM book b" +
+                                    " JOIN author a ON b.author_id = a.id")
+                    .addEntity("b", Book.class)
+                    .addJoin("a", "b.author")
+                    .addEntity("b", Book.class)
+                    .setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY)
+                    .list();
+
+            System.out.println();
+            System.out.println("After list select");
+            System.out.println();
+
+//            //при подобном способе маппинга - мы можем избежать n+1 проблемы
+            for (Book book : results) {
+                System.out.println(book);
+                System.out.println(book.getAuthor());
+            }
 
             entityManager.getTransaction().commit();
         }
