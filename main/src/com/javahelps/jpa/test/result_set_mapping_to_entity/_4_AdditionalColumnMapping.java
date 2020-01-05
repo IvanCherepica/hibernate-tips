@@ -1,14 +1,11 @@
-package com.javahelps.jpa.test.result_set_mapping;
+package com.javahelps.jpa.test.result_set_mapping_to_entity;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
-import org.hibernate.Session;
-import org.hibernate.type.StandardBasicTypes;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.List;
 
-public class _5_HibernateSpecificMapping {
+public class _4_AdditionalColumnMapping {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Author.class, Book.class});
 
@@ -23,34 +20,28 @@ public class _5_HibernateSpecificMapping {
             System.out.println("Before joined query");
             System.out.println();
 
+            List<Object> objects = entityManager.createNativeQuery(
+                    "SELECT a.id, a.firstName, a.lastName, a.version, count(b.id) as bookCount " +
+                            "FROM book b JOIN author a ON b.author_id = a.id GROUP BY a.id, a.firstName, a.lastName, a.version",
+                    "AuthorBookCountMapping"
+            ).getResultList();
 
+            objects.forEach((record) -> {
+                Object[] recordArray = (Object[])record;
+                Author author = (Author) recordArray[0];
+                Long bookCount = (Long)recordArray[1];
 
-            List<Object[]> results = ((Session)entityManager.getDelegate())
-                    .createSQLQuery("SELECT {b.*}, {a.*} FROM book b JOIN author a ON b.author_id = a.id")
-                    .addEntity("b", Book.class)
-                    .addEntity("a", Author.class)
-                    .list();
-
-            List<Book> books = new ArrayList<>(results.size());
-
-            results.forEach((record) -> {
-                Book book = (Book) record[0];
-                Author author = (Author) record[1];
-
-                books.add(book);
+                System.out.println("Author: ID ["+author.getId()+"] firstName ["+author.getFirstName()+"] lastName ["+author.getLastName()+"] number of books ["+bookCount+"]");
             });
 
             System.out.println();
             System.out.println("After joined query");
             System.out.println();
 
-            //никакого n+1
-            books.forEach(b -> System.out.println(b.getAuthor().getId()));
-
             entityManager.getTransaction().commit();
         }
 
-        {
+        {//т.к. мы достали только авторов - они попадут в кэш первого уровня. на книги будет произведен зпрос
             entityManager.getTransaction().begin();
 
             System.out.println();
@@ -62,33 +53,6 @@ public class _5_HibernateSpecificMapping {
 
             System.out.println();
             System.out.println("After check first level cash after 1 query");
-            System.out.println();
-
-            entityManager.getTransaction().commit();
-        }
-
-        entityManager.clear();
-
-        {
-            entityManager.getTransaction().begin();
-
-            System.out.println();
-            System.out.println("Before joined query");
-            System.out.println();
-
-            List<Object[]> results = ((Session)entityManager.getDelegate())
-                    .createSQLQuery("SELECT {a.*}, count(b.id) as bookCount FROM book b JOIN author a ON b.author_id = a.id GROUP BY a.id, a.firstName, a.lastName, a.version")
-                    .addEntity("a", Author.class)
-                    .addScalar("bookCount", StandardBasicTypes.LONG)
-                    .list();
-            results.forEach((record) -> {
-                Author author = (Author) record[0];
-                Long bookCount = (Long) record[1];
-                System.out.println("Author: ID [" + author.getId() + "] firstName [" + author.getFirstName() + "] lastName [" + author.getLastName() + "] number of books [" + bookCount + "]");
-            });
-
-            System.out.println();
-            System.out.println("After joined query");
             System.out.println();
 
             entityManager.getTransaction().commit();
@@ -124,6 +88,47 @@ public class _5_HibernateSpecificMapping {
 
     @Entity
     @Table(name = "author")
+    @SqlResultSetMappings({
+            @SqlResultSetMapping(
+                    name = "AuthorMapping",
+                    entities = @EntityResult(
+                            entityClass = Author.class,
+                            fields = {
+                                    @FieldResult(name = "id", column = "authorId"),
+                                    @FieldResult(name = "firstName", column = "firstName"),
+                                    @FieldResult(name = "lastName", column = "lastName"),
+                                    @FieldResult(name = "version", column = "version")
+                            }
+                    )
+            ),
+            @SqlResultSetMapping(
+                    name = "BookAuthorMapping",
+                    entities = {
+                            @EntityResult(
+                                    entityClass = Book.class,
+                                    fields = {
+                                            @FieldResult(name = "id", column = "id"),
+                                            @FieldResult(name = "title", column = "title"),
+                                            @FieldResult(name = "author", column = "author_id"),
+                                            @FieldResult(name = "version", column = "version")}),
+                            @EntityResult(
+                                    entityClass = Author.class,
+                                    fields = {
+                                            @FieldResult(name = "id", column = "authorId"),
+                                            @FieldResult(name = "firstName", column = "firstName"),
+                                            @FieldResult(name = "lastName", column = "lastName"),
+                                            @FieldResult(name = "version", column = "authorVersion")})}),
+            @SqlResultSetMapping(
+                    name = "AuthorBookCountMapping",
+                    entities = @EntityResult(
+                            entityClass = Author.class,
+                            fields = {
+                                    @FieldResult(name = "id", column = "id"),
+                                    @FieldResult(name = "firstName", column = "firstName"),
+                                    @FieldResult(name = "lastName", column = "lastName"),
+                                    @FieldResult(name = "version", column = "version")}),
+                    columns = @ColumnResult(name = "bookCount", type = Long.class))
+    })
     private static class Author {
 
         @Id

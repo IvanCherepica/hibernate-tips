@@ -1,11 +1,11 @@
-package com.javahelps.jpa.test.result_set_mapping;
+package com.javahelps.jpa.test.result_set_mapping_to_entity;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
 import javax.persistence.*;
 import java.util.List;
 
-public class _1_Problem {
+public class _2_SqlResultSetAnnotatonSolution {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Author.class});
 
@@ -16,9 +16,17 @@ public class _1_Problem {
             // замапить сущнсоть целиком, будто бы это jpql запрос
             entityManager.getTransaction().begin();
 
+            System.out.println();
+            System.out.println("Before select all parameter query");
+            System.out.println();
+
             List<Author> authors = entityManager.createNativeQuery("SELECT * FROM author", Author.class).getResultList();
 
             authors.forEach(a -> System.out.println(a.getId()));
+
+            System.out.println();
+            System.out.println("After select all parameter query");
+            System.out.println();
 
             entityManager.getTransaction().commit();
         }
@@ -26,20 +34,52 @@ public class _1_Problem {
         {//запрос выше записал в кэш первого уровня все выбранные сущности
             entityManager.getTransaction().begin();
 
+            System.out.println();
+            System.out.println("Before check first level cash after 1 query");
+            System.out.println();
+
             entityManager.find(Author.class, 1L);
+
+            System.out.println();
+            System.out.println("After check first level cash after 1 query");
+            System.out.println();
 
             entityManager.getTransaction().commit();
         }
 
         entityManager.clear();
 
-        {//проблема возникает, когда мы не можем использовать * или не можем обеспечить именное соответствие полей объекта
-            // и столбцов в выборке
+        {//теперь мы можем использовать собственные названия для каждого столбца. проблема в том, что решение не гибкое
+            //на каждый подбный запрос придётся писать свой sqlresultsetmapping, который занимает довольно много места в сущности
             entityManager.getTransaction().begin();
 
-            List<Author> authors = entityManager.createNativeQuery("SELECT a.id as authorId, a.firstName, a.lastName, a.version FROM author a", Author.class).getResultList();
+            System.out.println();
+            System.out.println("Before select query with different name parameter");
+            System.out.println();
+
+            List<Author> authors = entityManager.createNativeQuery("SELECT a.id as authorId, a.firstName, a.lastName, a.version FROM author a", "AuthorMapping").getResultList();
 
             authors.forEach(a -> System.out.println(a.getId()));
+
+            System.out.println();
+            System.out.println("After select query with different name parameter");
+            System.out.println();
+
+            entityManager.getTransaction().commit();
+        }
+
+        {//запрос выше записал в кэш первого уровня все выбранные сущности
+            entityManager.getTransaction().begin();
+
+            System.out.println();
+            System.out.println("Before check first level cash after 2 query");
+            System.out.println();
+
+            entityManager.find(Author.class, 1L);
+
+            System.out.println();
+            System.out.println("After check first level cash after 2 query");
+            System.out.println();
 
             entityManager.getTransaction().commit();
         }
@@ -59,6 +99,18 @@ public class _1_Problem {
 
     @Entity
     @Table(name = "author")
+    @SqlResultSetMapping(
+            name = "AuthorMapping",
+            entities = @EntityResult(
+                    entityClass = Author.class,
+                    fields = {
+                            @FieldResult(name = "id", column = "authorId"),
+                            @FieldResult(name = "firstName", column = "firstName"),
+                            @FieldResult(name = "lastName", column = "lastName"),
+                            @FieldResult(name = "version", column = "version")
+                    }
+            )
+    )
     private static class Author {
 
         @Id

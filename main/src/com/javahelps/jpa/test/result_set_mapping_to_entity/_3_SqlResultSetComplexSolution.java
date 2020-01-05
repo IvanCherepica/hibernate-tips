@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.result_set_mapping;
+package com.javahelps.jpa.test.result_set_mapping_to_entity;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
