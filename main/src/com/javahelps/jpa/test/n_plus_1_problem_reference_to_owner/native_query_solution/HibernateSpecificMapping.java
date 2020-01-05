@@ -44,12 +44,8 @@ public class HibernateSpecificMapping {
 
         entityManager.clear();
 
-        {//в случае, когда мы используем коллекцию для инициализации связи - мы не можем ничего указать в качестве алиса для поля
-            //через аннотацию @FieldResult. Соответственно, хибернейт не сможет автоматически замапить эту коллекцию, даже не смотря на то
-            //что данные уже загружены в память. Более того, если посмотреть на самый последний запрос, проверяющий наличие в кэше
-            //первого уровня связанных сущносей - мы увидим, что сущности были распознаны хибернейтом и загружены в кэщ
-            //но этого для мапинга недостаточно. Даже если мы сами попытаемся мапить два объекта и потом вставлять коллекции
-            //хибернейт воспримит новые объекты как Detached сущности и будет совершать дополнительные запросы каждый раз
+        {//используя addJoin и DISTINCT_ROOT_ENTITY - можно сказать хибернейту, что он должен взять данные из полученного резалтсета
+            //и преобразовать алиас s в класс Stock, затем заджойнить его с sdr
             entityManager.getTransaction().begin();
 
             System.out.println();
@@ -71,7 +67,7 @@ public class HibernateSpecificMapping {
             System.out.println("After list select");
             System.out.println();
 
-            //снова видем n+1 проблему, не смотря на присутствие всех необходимых объектов в кэше
+            //при подобном способе маппинга - мы можем избежать n+1 проблемы
             for (StockDailyRecord stockDailyRecord : results) {
                 System.out.println(stockDailyRecord.getId());
                 System.out.println(stockDailyRecord.getStock());
@@ -80,7 +76,7 @@ public class HibernateSpecificMapping {
             entityManager.getTransaction().commit();
         }
 
-        {//используя FetchMode.SUBSELECT мы и на таком запросе приобретаем один дополнительный запрос
+        {//проверяем, все ли объекты были загруженны в кэш первого уровня
             entityManager.getTransaction().begin();
 
             System.out.println();
