@@ -65,7 +65,7 @@ public class _8_Cascade {
 
         private String title;
 
-        @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+        @OneToMany(mappedBy = "task", orphanRemoval = true, cascade = CascadeType.ALL)
         private List<Answer> answers = new ArrayList<>();
 
         public Task(String title) {
@@ -168,7 +168,6 @@ public class _8_Cascade {
             return "Answer{" +
                     "id=" + id +
                     ", answer='" + answer + '\'' +
-                    ", task=" + task +
                     '}';
         }
     }
