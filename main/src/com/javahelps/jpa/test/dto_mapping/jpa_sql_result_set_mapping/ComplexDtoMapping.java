@@ -32,7 +32,7 @@ public class ComplexDtoMapping {
 
             taskDtos.forEach(System.out::println);
 
-            entityManager.getTransaction().commit();
+            entityManager.  getTransaction().commit();
         }
 
         entityManager.clear();
