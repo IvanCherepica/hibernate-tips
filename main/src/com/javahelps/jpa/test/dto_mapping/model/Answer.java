@@ -1,9 +1,35 @@
 package com.javahelps.jpa.test.dto_mapping.model;
 
+import com.javahelps.jpa.test.dto_mapping.dto.AnswerDto;
+import com.javahelps.jpa.test.dto_mapping.dto.AnswerDtoWithTaskDto;
+import com.javahelps.jpa.test.dto_mapping.dto.TaskDto;
+
 import javax.persistence.*;
 
 @Entity
 @Table(name = "answer")
+@SqlResultSetMappings({
+        @SqlResultSetMapping(
+                name = "AnswerDtoMapping",
+                classes = @ConstructorResult(
+                        targetClass = AnswerDto.class,
+                        columns = {
+                                @ColumnResult(name = "id", type = Long.class),
+                                @ColumnResult(name = "answer")})),
+        @SqlResultSetMapping(
+                name = "AnswerDtoWithTaskDtoMapping",
+                classes = {
+                        @ConstructorResult(
+                                targetClass = AnswerDtoWithTaskDto.class,
+                                columns = {
+                                        @ColumnResult(name = "answerId", type = Long.class),
+                                        @ColumnResult(name = "answer")}),
+                        @ConstructorResult(
+                                targetClass = TaskDto.class,
+                                columns = {
+                                        @ColumnResult(name = "taskId", type = Long.class),
+                                        @ColumnResult(name = "title")})})
+})
 public class Answer {
     @Id
     @GeneratedValue

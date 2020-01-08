@@ -3,6 +3,7 @@ package com.javahelps.jpa.test.dto_mapping.dto;
 import com.javahelps.jpa.test.dto_mapping.model.Answer;
 
 import java.util.List;
+import java.util.Objects;
 
 public class TaskDtoWithAnswersDto {
     private long id;
@@ -47,6 +48,20 @@ public class TaskDtoWithAnswersDto {
 
     public void setAnswerDtos(List<AnswerDto> answerDtos) {
         this.answerDtos = answerDtos;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TaskDtoWithAnswersDto that = (TaskDtoWithAnswersDto) o;
+        return id == that.id &&
+                Objects.equals(title, that.title);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, title);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.javahelps.jpa.test.dto_mapping.dto;
 
+import java.util.Objects;
+
 public class TaskDto {
     private long id;
 
@@ -27,6 +29,20 @@ public class TaskDto {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TaskDto taskDto = (TaskDto) o;
+        return id == taskDto.id &&
+                Objects.equals(title, taskDto.title);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, title);
     }
 
     @Override

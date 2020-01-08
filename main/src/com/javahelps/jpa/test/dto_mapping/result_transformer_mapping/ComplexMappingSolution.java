@@ -1,8 +1,10 @@
 package com.javahelps.jpa.test.dto_mapping.result_transformer_mapping;
 
 import com.javahelps.jpa.test.dto_mapping.Util;
+import com.javahelps.jpa.test.dto_mapping.dto.AnswerDto;
 import com.javahelps.jpa.test.dto_mapping.dto.AnswerDtoWithTask;
 import com.javahelps.jpa.test.dto_mapping.dto.TaskDtoWithAnswer;
+import com.javahelps.jpa.test.dto_mapping.dto.TaskDtoWithAnswersDto;
 import com.javahelps.jpa.test.dto_mapping.model.Answer;
 import com.javahelps.jpa.test.dto_mapping.model.Task;
 import com.javahelps.jpa.test.util.PersistentHelper;
@@ -34,7 +36,7 @@ public class ComplexMappingSolution {
                             "FROM task t JOIN answer a on t.id = a.task_id"
             )
                     .unwrap(SQLQuery.class)
-                    .setResultTransformer(new TestNativeTransformer())
+                    .setResultTransformer(new TaskDtoWithAnswerTransformer())
                     .list();
 
 
@@ -48,9 +50,37 @@ public class ComplexMappingSolution {
 
             entityManager.getTransaction().commit();
         }
+
+        entityManager.clear();
+
+        {//из этого примера тоже следует исключить работу с сущностью. не смотря на то
+            //что в примере выше сущность создается руками - она не перестает быть сущностью, даже в переходном стостоянии
+            //мы проделывать операции с ней, которые будет оптравлять запросы в бл, что противоречит ридонли логике дто
+            entityManager.getTransaction().begin();
+
+
+            List<TaskDtoWithAnswersDto> taskDtoWithAnswersDtos = entityManager.createNativeQuery(
+                    "SELECT t.id AS taskId, t.title, a.id AS answerId, a.answer " +
+                            "FROM task t JOIN answer a on t.id = a.task_id"
+            )
+                    .unwrap(SQLQuery.class)
+                    .setResultTransformer(new TaskDtoWithAnswerTransformer())
+                    .list();
+
+
+            for (TaskDtoWithAnswersDto taskDtoWithAnswersDto : taskDtoWithAnswersDtos) {
+                System.out.println(taskDtoWithAnswersDto);
+
+                for (AnswerDto answerDto : taskDtoWithAnswersDto.getAnswerDtos()) {
+                    System.out.println(answerDto);
+                }
+            }
+
+            entityManager.getTransaction().commit();
+        }
     }
 
-    private static class TestNativeTransformer implements ResultTransformer {
+    private static class TaskDtoWithAnswerTransformer implements ResultTransformer {
 
         private Map<Long, List<Answer>> answerMap = new HashMap<>();
 
@@ -58,10 +88,10 @@ public class ComplexMappingSolution {
 
         @Override
         public Object transformTuple(Object[] tuple, String[] aliaces) {
-            Long taskId = ((BigInteger) tuple[0]).longValue();
+            long taskId = ((BigInteger) tuple[0]).longValue();
             String title =  (String) tuple[1];
 
-            Long answerId = ((BigInteger) tuple[2]).longValue();
+            long answerId = ((BigInteger) tuple[2]).longValue();
             String answer = (String) tuple[3];
 
             Answer answer1 = new Answer(answer);
@@ -82,6 +112,41 @@ public class ComplexMappingSolution {
         public List transformList(List list) {
             for (TaskDtoWithAnswer taskDtoWithAnswer : roots) {
                 taskDtoWithAnswer.setAnswers(answerMap.get(taskDtoWithAnswer.getId()));
+            }
+
+            return roots;
+        }
+    }
+
+    private static class TaskDtoWithAnswerDtosTransformer implements ResultTransformer {
+
+        private Map<Long, List<AnswerDto>> answerMap = new HashMap<>();
+
+        private List<TaskDtoWithAnswersDto> roots = new ArrayList<>();
+
+        @Override
+        public Object transformTuple(Object[] tuple, String[] aliaces) {
+            long taskId = ((BigInteger) tuple[0]).longValue();
+            String title =  (String) tuple[1];
+
+            long answerId = ((BigInteger) tuple[2]).longValue();
+            String answer = (String) tuple[3];
+
+            TaskDtoWithAnswersDto taskDtoWithAnswer = new TaskDtoWithAnswersDto(taskId, title);
+
+            if (!answerMap.containsKey(taskId)) {
+                roots.add(taskDtoWithAnswer);
+                answerMap.put(taskId, new ArrayList<>());
+            }
+
+            answerMap.get(taskId).add(new AnswerDto(answerId, answer));
+            return taskDtoWithAnswer;
+        }
+
+        @Override
+        public List transformList(List list) {
+            for (TaskDtoWithAnswersDto taskDtoWithAnswersDto : roots) {
+                taskDtoWithAnswersDto.setAnswerDtos(answerMap.get(taskDtoWithAnswersDto.getId()));
             }
 
             return roots;

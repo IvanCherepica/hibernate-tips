@@ -2,6 +2,8 @@ package com.javahelps.jpa.test.dto_mapping.dto;
 
 import com.javahelps.jpa.test.dto_mapping.model.Task;
 
+import java.util.Objects;
+
 public class AnswerDtoWithTaskDto {
     private long id;
 
@@ -21,6 +23,12 @@ public class AnswerDtoWithTaskDto {
         this.id = id;
         this.answer = answer;
         this.taskDto = taskDto;
+    }
+
+    public AnswerDtoWithTaskDto(long answerId, String answer, long taskId, String taskTitle) {
+        this.id = answerId;
+        this.answer = answer;
+        this.taskDto = new TaskDto(taskId, taskTitle);
     }
 
     public long getId() {
@@ -45,6 +53,20 @@ public class AnswerDtoWithTaskDto {
 
     public void setTaskDto(TaskDto taskDto) {
         this.taskDto = taskDto;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AnswerDtoWithTaskDto that = (AnswerDtoWithTaskDto) o;
+        return id == that.id &&
+                Objects.equals(answer, that.answer);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, answer);
     }
 
     @Override

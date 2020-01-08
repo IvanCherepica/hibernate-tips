@@ -1,10 +1,7 @@
 package com.javahelps.jpa.test.dto_mapping.jpa_constructor_expression;
 
 import com.javahelps.jpa.test.dto_mapping.Util;
-import com.javahelps.jpa.test.dto_mapping.dto.AnswerDto;
-import com.javahelps.jpa.test.dto_mapping.dto.AnswerDtoWithTask;
-import com.javahelps.jpa.test.dto_mapping.dto.TaskDto;
-import com.javahelps.jpa.test.dto_mapping.dto.TaskDtoWithAnswer;
+import com.javahelps.jpa.test.dto_mapping.dto.*;
 import com.javahelps.jpa.test.dto_mapping.model.Answer;
 import com.javahelps.jpa.test.dto_mapping.model.Task;
 import com.javahelps.jpa.test.util.PersistentHelper;
