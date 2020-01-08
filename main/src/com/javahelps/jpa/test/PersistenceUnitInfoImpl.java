@@ -17,7 +17,7 @@ public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
 
     public static final String JPA_VERSION = "2.1";
 
-    private String persistenceUnitName;
+    private String persistenceUnitName = "test";
 
     private PersistenceUnitTransactionType transactionType = PersistenceUnitTransactionType.RESOURCE_LOCAL;
 
