@@ -36,7 +36,7 @@ public class ComplexMappingSolution {
                             "FROM task t JOIN answer a on t.id = a.task_id"
             )
                     .unwrap(SQLQuery.class)
-                    .setResultTransformer(new TaskDtoWithAnswerTransformer())
+                    .setResultTransformer(new TaskDtoWithAnswerTransformerForNativeQuery())
                     .list();
 
 
@@ -64,7 +64,33 @@ public class ComplexMappingSolution {
                             "FROM task t JOIN answer a on t.id = a.task_id"
             )
                     .unwrap(SQLQuery.class)
-                    .setResultTransformer(new TaskDtoWithAnswerTransformer())
+                    .setResultTransformer(new TaskDtoWithAnswersDtoTransformerForNativeQuery())
+                    .list();
+
+
+            for (TaskDtoWithAnswersDto taskDtoWithAnswersDto : taskDtoWithAnswersDtos) {
+                System.out.println(taskDtoWithAnswersDto);
+
+                for (AnswerDto answerDto : taskDtoWithAnswersDto.getAnswerDtos()) {
+                    System.out.println(answerDto);
+                }
+            }
+
+            entityManager.getTransaction().commit();
+        }
+
+        {//из этого примера тоже следует исключить работу с сущностью. не смотря на то
+            //что в примере выше сущность создается руками - она не перестает быть сущностью, даже в переходном стостоянии
+            //мы проделывать операции с ней, которые будет оптравлять запросы в бл, что противоречит ридонли логике дто
+            entityManager.getTransaction().begin();
+
+
+            List<TaskDtoWithAnswersDto> taskDtoWithAnswersDtos = entityManager.createQuery(
+                    "SELECT t.id AS taskId, t.title, a.id AS answerId, a.answer " +
+                            "FROM Task t JOIN Answer a on t.id = a.task.id"
+            )
+                    .unwrap(Query.class)
+                    .setResultTransformer(new TaskDtoWithAnswerDtosTransformerForJPQLQuery())
                     .list();
 
 
@@ -80,7 +106,7 @@ public class ComplexMappingSolution {
         }
     }
 
-    private static class TaskDtoWithAnswerTransformer implements ResultTransformer {
+    private static class TaskDtoWithAnswerTransformerForNativeQuery implements ResultTransformer {
 
         private Map<Long, List<Answer>> answerMap = new HashMap<>();
 
@@ -118,7 +144,7 @@ public class ComplexMappingSolution {
         }
     }
 
-    private static class TaskDtoWithAnswerDtosTransformer implements ResultTransformer {
+    private static class TaskDtoWithAnswersDtoTransformerForNativeQuery implements ResultTransformer {
 
         private Map<Long, List<AnswerDto>> answerMap = new HashMap<>();
 
@@ -130,6 +156,41 @@ public class ComplexMappingSolution {
             String title =  (String) tuple[1];
 
             long answerId = ((BigInteger) tuple[2]).longValue();
+            String answer = (String) tuple[3];
+
+            TaskDtoWithAnswersDto taskDtoWithAnswer = new TaskDtoWithAnswersDto(taskId, title);
+
+            if (!answerMap.containsKey(taskId)) {
+                roots.add(taskDtoWithAnswer);
+                answerMap.put(taskId, new ArrayList<>());
+            }
+
+            answerMap.get(taskId).add(new AnswerDto(answerId, answer));
+            return taskDtoWithAnswer;
+        }
+
+        @Override
+        public List transformList(List list) {
+            for (TaskDtoWithAnswersDto taskDtoWithAnswersDto : roots) {
+                taskDtoWithAnswersDto.setAnswerDtos(answerMap.get(taskDtoWithAnswersDto.getId()));
+            }
+
+            return roots;
+        }
+    }
+
+    private static class TaskDtoWithAnswerDtosTransformerForJPQLQuery implements ResultTransformer {
+
+        private Map<Long, List<AnswerDto>> answerMap = new HashMap<>();
+
+        private List<TaskDtoWithAnswersDto> roots = new ArrayList<>();
+
+        @Override
+        public Object transformTuple(Object[] tuple, String[] aliaces) {
+            long taskId = (long) tuple[0];
+            String title =  (String) tuple[1];
+
+            long answerId = (long) tuple[2];
             String answer = (String) tuple[3];
 
             TaskDtoWithAnswersDto taskDtoWithAnswer = new TaskDtoWithAnswersDto(taskId, title);
