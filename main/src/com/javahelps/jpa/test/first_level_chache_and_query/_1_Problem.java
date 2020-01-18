@@ -12,9 +12,9 @@ public class _1_Problem {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
         saveObjects(entityManager);
-        changeReviewByObjectState(entityManager);
-        changeReviewByQuery(entityManager);
-        changeReviewByNativeQuery(entityManager);
+        changeByObjectState(entityManager);
+        changeByQuery(entityManager);
+        changeByNativeQuery(entityManager);
 
 
         entityManager.getTransaction().begin();
@@ -31,7 +31,7 @@ public class _1_Problem {
         //нативный запрос, или нет - разницы не существует
     }
 
-    private static void changeReviewByNativeQuery(EntityManager entityManager) {
+    private static void changeByNativeQuery(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
         entityManager.createNativeQuery("update post_comment set review='Comment 4' where id=1").executeUpdate();
@@ -39,7 +39,7 @@ public class _1_Problem {
         entityManager.getTransaction().commit();
     }
 
-    private static void changeReviewByQuery(EntityManager entityManager) {
+    private static void changeByQuery(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
         entityManager.createQuery("UPDATE PostComment pc SET pc.review = 'Comment 3' WHERE pc.id = 1").executeUpdate();
@@ -47,7 +47,7 @@ public class _1_Problem {
         entityManager.getTransaction().commit();
     }
 
-    private static void changeReviewByObjectState(EntityManager entityManager) {
+    private static void changeByObjectState(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
         PostComment postComment = entityManager.find(PostComment.class, 1L);
