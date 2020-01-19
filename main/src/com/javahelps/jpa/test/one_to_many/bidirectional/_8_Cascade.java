@@ -60,7 +60,7 @@ public class _8_Cascade {
     @Table(name = "task")
     static class Task {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         private String title;
@@ -123,7 +123,7 @@ public class _8_Cascade {
     @Table(name = "answer")
     static class Answer {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         private String answer;

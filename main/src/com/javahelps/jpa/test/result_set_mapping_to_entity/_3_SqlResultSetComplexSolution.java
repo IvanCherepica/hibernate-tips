@@ -129,7 +129,7 @@ public class _3_SqlResultSetComplexSolution {
     private static class Author {
 
         @Id
-        @GeneratedValue(strategy = GenerationType.AUTO)
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "id", updatable = false, nullable = false)
         private Long id;
         @Version
@@ -217,7 +217,7 @@ public class _3_SqlResultSetComplexSolution {
     private static class Book {
 
         @Id
-        @GeneratedValue(strategy = GenerationType.AUTO)
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "id", updatable = false, nullable = false)
         private Long id;
         @Version

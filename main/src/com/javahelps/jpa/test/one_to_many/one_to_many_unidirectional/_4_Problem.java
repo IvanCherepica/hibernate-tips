@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many.unidirectional;
+package com.javahelps.jpa.test.one_to_many.one_to_many_unidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class _2_Problem {
+public class _4_Problem {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
@@ -20,10 +20,9 @@ public class _2_Problem {
         entityManager.getTransaction().begin();
 
         Post post = entityManager.find(Post.class, 1L);
+        post.getComments().remove(0);
 
         entityManager.getTransaction().commit();
-
-        post.getComments().forEach(pc -> System.out.println(pc.getReview()));
 
     }
 
@@ -52,12 +51,13 @@ public class _2_Problem {
     public static class Post {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String title;
 
         @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+        @JoinColumn(name = "post_id")
         private List<PostComment> comments = new ArrayList<>();
 
         public Post() {
@@ -111,7 +111,7 @@ public class _2_Problem {
     public static class PostComment {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String review;

@@ -68,7 +68,7 @@ public class _5_JoinColumnSolution {
     @Table(name = "task")
     static class Task {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         private String title;
@@ -121,7 +121,7 @@ public class _5_JoinColumnSolution {
     @Table(name = "answer")
     static class Answer {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         private String answer;

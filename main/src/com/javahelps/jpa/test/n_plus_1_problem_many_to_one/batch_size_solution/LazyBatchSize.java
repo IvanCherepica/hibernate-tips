@@ -161,7 +161,7 @@ public class LazyBatchSize {
     @Table(name = "stock_daily_record")
     private static class StockDailyRecord {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         @ManyToOne(fetch = FetchType.LAZY)

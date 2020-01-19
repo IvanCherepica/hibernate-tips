@@ -66,7 +66,7 @@ public class _10_Solution3 {
     @Table(name = "task")
     static class Task {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         private String title;

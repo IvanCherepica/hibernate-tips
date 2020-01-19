@@ -66,7 +66,7 @@ public class _7_Solution {
     private static class Post {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String title;
@@ -138,7 +138,7 @@ public class _7_Solution {
     private static class Tag {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String name;

@@ -125,7 +125,7 @@ public class EagerFetchType {
     @Table(name = "stock_daily_record")
     private static class StockDailyRecord {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         public StockDailyRecord() {
@@ -146,7 +146,7 @@ public class EagerFetchType {
     private static class Stock implements Serializable {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)

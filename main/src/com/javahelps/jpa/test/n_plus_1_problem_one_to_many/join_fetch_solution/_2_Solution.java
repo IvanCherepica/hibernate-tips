@@ -73,7 +73,7 @@ public class _2_Solution {
     @Table(name = "task")
     private static class Task {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         private String title;

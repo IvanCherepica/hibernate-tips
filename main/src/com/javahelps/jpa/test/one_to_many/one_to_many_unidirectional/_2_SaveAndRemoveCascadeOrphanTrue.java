@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many.unidirectional;
+package com.javahelps.jpa.test.one_to_many.one_to_many_unidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -7,47 +7,60 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class ___2_Problem {
+public class _2_SaveAndRemoveCascadeOrphanTrue {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
-        saveData(entityManager);
-        entityManager.clear();
-        System.out.println();
-        System.out.println("--после вставки данных--");
-        System.out.println();
-
-        entityManager.getTransaction().begin();
-
-        List<Post> posts = entityManager.createQuery("FROM " + Post.class.getName(), Post.class).getResultList();
-
-        entityManager.getTransaction().commit();
-
-        for (Post post : posts) {
-            System.out.println(post.getTitle());
-            post.getComments().forEach(pc -> System.out.println(pc.getReview()));
-            ;
-        }
+        persistIssue(entityManager);
+        removeIssue(entityManager);
     }
 
-    private static void saveData(EntityManager entityManager) {
+    private static void removeIssue(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
-        Post post1 = new Post("Post 1");
-        Post post2 = new Post("Post 2");
+        System.out.println();
+        System.out.println("Before removing");
+        System.out.println();
 
-        post1.getComments().add(new PostComment("Comment 1"));
-        post1.getComments().add(new PostComment("Comment 2"));
-        post1.getComments().add(new PostComment("Comment 3"));
+        Post post = entityManager.find(Post.class, 1L);
 
-        post2.getComments().add(new PostComment("Comment 4"));
-        post2.getComments().add(new PostComment("Comment 5"));
-        post2.getComments().add(new PostComment("Comment 6"));
-
-        entityManager.persist(post1);
-        entityManager.persist(post2);
+        post.getComments().remove(0);
 
         entityManager.getTransaction().commit();
+        //вместо одного запроса на удаление - мы получаем 2 запроса на удаление и ещё 2 на вставку
+        //хибернейт не может понять точно, какую запись из смежной таблицы надо удалить, поэтому
+        //он удаляет вообще все связи, ассоциированные с этим постом
+        //и затем вставляет новые связи (за место тех, которые были удалены, но которые должны остаться)
+
+        System.out.println();
+        System.out.println("After removing");
+        System.out.println();
+    }
+
+    private static void persistIssue(EntityManager entityManager) {
+        entityManager.getTransaction().begin();
+
+        System.out.println();
+        System.out.println("Before saving");
+        System.out.println();
+
+        Post post = new Post("Post 1");
+
+        post.getComments().add(new PostComment("Comment 1"));
+        post.getComments().add(new PostComment("Comment 2"));
+        post.getComments().add(new PostComment("Comment 3"));
+        post.getComments().add(new PostComment("Comment 4"));
+        post.getComments().add(new PostComment("Comment 5"));
+
+        entityManager.persist(post);
+
+        entityManager.getTransaction().commit();
+        //проблема в том, что на добавление 4 сущностей в базу тратится 7 запросов. Это происходит из-за того,
+        //что на данный тип связи создается отдельная таблица, которую мы вынужденны поддерживать
+
+        System.out.println();
+        System.out.println("After saving");
+        System.out.println();
     }
 
     @Entity(name = "Post")
@@ -55,7 +68,7 @@ public class ___2_Problem {
     public static class Post {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String title;
@@ -114,7 +127,7 @@ public class ___2_Problem {
     public static class PostComment {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String review;

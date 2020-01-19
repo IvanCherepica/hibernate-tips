@@ -145,7 +145,7 @@ public class FetchModeSelect {
     @Table(name = "stock_daily_record")
     private static class StockDailyRecord {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         public StockDailyRecord() {
@@ -166,7 +166,7 @@ public class FetchModeSelect {
     private static class Stock implements Serializable {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)

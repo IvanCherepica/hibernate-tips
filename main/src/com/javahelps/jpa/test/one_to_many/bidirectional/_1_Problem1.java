@@ -38,7 +38,7 @@ public class _1_Problem1 {
     @Table(name = "task")
     static class Task {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         private String title;
@@ -91,7 +91,7 @@ public class _1_Problem1 {
     @Table(name = "answer")
     static class Answer {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         private String answer;

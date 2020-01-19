@@ -9,7 +9,7 @@ import java.util.List;
 class Post {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String title;

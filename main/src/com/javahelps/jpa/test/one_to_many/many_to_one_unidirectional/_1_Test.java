@@ -1,4 +1,4 @@
-package com.javahelps.jpa.test.one_to_many.unidirectional;
+package com.javahelps.jpa.test.one_to_many.many_to_one_unidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
@@ -7,35 +7,79 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class _1_Problem {
+public class _1_Test {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
+        persistIssue(entityManager);
+        removeIssue(entityManager);
+    }
+
+    private static void removeIssue(EntityManager entityManager) {
         entityManager.getTransaction().begin();
+
+        System.out.println();
+        System.out.println("Before removing");
+        System.out.println();
+
+        PostComment postComment = entityManager.find(PostComment.class, 1L);
+        postComment.setPost(null);
+
+        entityManager.getTransaction().commit();
+
+        System.out.println();
+        System.out.println("After removing");
+        System.out.println();
+    }
+
+    private static void persistIssue(EntityManager entityManager) {
+        entityManager.getTransaction().begin();
+
+        System.out.println();
+        System.out.println("Before saving");
+        System.out.println();
 
         Post post = new Post("Post 1");
 
-        post.getComments().add(new PostComment("Comment 1"));
-        post.getComments().add(new PostComment("Comment 2"));
-        post.getComments().add(new PostComment("Comment 3"));
+        PostComment postComment1 = new PostComment("Comment 1");
+        PostComment postComment2 = new PostComment("Comment 2");
+        PostComment postComment3 = new PostComment("Comment 3");
+        PostComment postComment4 = new PostComment("Comment 4");
+        PostComment postComment5 = new PostComment("Comment 5");
+
+        postComment1.setPost(post);
+        postComment2.setPost(post);
+        postComment3.setPost(post);
+        postComment4.setPost(post);
+        postComment5.setPost(post);
 
         entityManager.persist(post);
 
+        entityManager.persist(postComment1);
+        entityManager.persist(postComment2);
+        entityManager.persist(postComment3);
+        entityManager.persist(postComment4);
+        entityManager.persist(postComment5);
+
+
         entityManager.getTransaction().commit();
+
+        System.out.println();
+        System.out.println("After saving");
+        System.out.println();
     }
+
+
 
     @Entity(name = "Post")
     @Table(name = "post")
     public static class Post {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String title;
-
-        @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-        private List<PostComment> comments = new ArrayList<>();
 
         public Post() {
         }
@@ -60,14 +104,6 @@ public class _1_Problem {
             this.title = title;
         }
 
-        public List<PostComment> getComments() {
-            return comments;
-        }
-
-        public void setComments(List<PostComment> comments) {
-            this.comments = comments;
-        }
-
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -88,10 +124,14 @@ public class _1_Problem {
     public static class PostComment {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
         private String review;
+
+        @ManyToOne
+        @JoinColumn(name = "post_id")
+        private Post post;
 
         public PostComment() {
         }
@@ -114,6 +154,14 @@ public class _1_Problem {
 
         public void setReview(String review) {
             this.review = review;
+        }
+
+        public Post getPost() {
+            return post;
+        }
+
+        public void setPost(Post post) {
+            this.post = post;
         }
 
         @Override
