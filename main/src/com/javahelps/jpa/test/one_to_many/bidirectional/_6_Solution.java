@@ -5,87 +5,95 @@ import com.javahelps.jpa.test.util.PersistentHelper;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class _6_Solution {
     public static void main(String[] args) {
-        EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
+        EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
-        saveTaskWithAnswers(entityManager);
-
-        //начинаем новую транзакцию
-        entityManager.getTransaction().begin();
-
-        //достём из базы задачу с id = 1
-        Task task = entityManager.find(Task.class, 1L);
-
-        entityManager.getTransaction().commit();
-
-        //теперь всё работает
-        System.out.println(task.getAnswers());
-
-
-        entityManager.getTransaction().begin();
-
-        Answer answer = entityManager.find(Answer.class, 1L);
-
-        entityManager.getTransaction().commit();
-
-        //и здесь
-        System.out.println(answer.getTask());
-
+        persistIssue(entityManager);
+        removeIssue(entityManager);
     }
 
-    private static void saveTaskWithAnswers(EntityManager entityManager) {
+    private static void removeIssue(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
-        //создаём три ответа; состояние объектов - transient
-        Answer answer1 = new Answer("Answer 1");
-        Answer answer2 = new Answer("Answer 2");
-        Answer answer3 = new Answer("Answer 3");
+        System.out.println();
+        System.out.println("Before removing");
+        System.out.println();
 
-        //создаём задачу, тоже transient
-        Task task = new Task("Task 1");
-
-        //сначала сохраняем в базу объект task, что бы избежать ошибки переходного состояния
-        entityManager.persist(task);
-
-        //после этого persistent объект присоединяем к transient объектам, прежде чем сохранить их в базу
-        //остааётся только одна проблема: такой код выглядит сложным и запутанным. не хотелось бы каждый раз его писать
-        answer1.setTask(task);
-        answer2.setTask(task);
-        answer3.setTask(task);
-
-        entityManager.persist(answer1);
-        entityManager.persist(answer2);
-        entityManager.persist(answer3);
+        PostComment postComment = entityManager.find(PostComment.class, 1L);
+        postComment.setPost(null);
 
         entityManager.getTransaction().commit();
+
+        System.out.println();
+        System.out.println("After removing");
+        System.out.println();
     }
 
-    @Entity
-    @Table(name = "task")
-    static class Task {
+    private static void persistIssue(EntityManager entityManager) {
+        entityManager.getTransaction().begin();
+
+        System.out.println();
+        System.out.println("Before saving");
+        System.out.println();
+
+        Post post = new Post("Post 1");
+
+        PostComment postComment1 = new PostComment("Comment 1");
+        PostComment postComment2 = new PostComment("Comment 2");
+        PostComment postComment3 = new PostComment("Comment 3");
+        PostComment postComment4 = new PostComment("Comment 4");
+        PostComment postComment5 = new PostComment("Comment 5");
+
+        postComment1.setPost(post);
+        postComment2.setPost(post);
+        postComment3.setPost(post);
+        postComment4.setPost(post);
+        postComment5.setPost(post);
+
+        entityManager.persist(post);
+
+        entityManager.persist(postComment1);
+        entityManager.persist(postComment2);
+        entityManager.persist(postComment3);
+        entityManager.persist(postComment4);
+        entityManager.persist(postComment5);
+
+
+        entityManager.getTransaction().commit();
+
+        System.out.println();
+        System.out.println("After saving");
+        System.out.println();
+    }
+
+    @Entity(name = "Post")
+    @Table(name = "post")
+    public static class Post {
+
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private long id;
+        private Long id;
 
         private String title;
 
-        @OneToMany(mappedBy = "task")
-        private List<Answer> answers = new ArrayList<>();
+        @OneToMany(mappedBy = "post")
+        private List<PostComment> postComments = new ArrayList<>();
 
-        public Task(String title) {
+        public Post() {
+        }
+
+        public Post(String title) {
             this.title = title;
         }
 
-        public Task() {
-        }
-
-        public long getId() {
+        public Long getId() {
             return id;
         }
 
-        public void setId(long id) {
+        public void setId(Long id) {
             this.id = id;
         }
 
@@ -97,75 +105,86 @@ public class _6_Solution {
             this.title = title;
         }
 
-        public List<Answer> getAnswers() {
-            return answers;
+        public List<PostComment> getPostComments() {
+            return postComments;
         }
 
-        public void setAnswers(List<Answer> answers) {
-            this.answers = answers;
+        public void setPostComments(List<PostComment> postComments) {
+            this.postComments = postComments;
         }
 
         @Override
-        public String toString() {
-            return "Task{" +
-                    "id=" + id +
-                    ", title='" + title + '\'' +
-                    ", answers=" + answers +
-                    '}';
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Post post = (Post) o;
+            return Objects.equals(id, post.id) &&
+                    Objects.equals(title, post.title);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, title);
         }
     }
 
-    @Entity
-    @Table(name = "answer")
-    static class Answer {
+    @Entity(name = "PostComment")
+    @Table(name = "post_comment")
+    public static class PostComment {
+
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private long id;
+        private Long id;
 
-        private String answer;
+        private String review;
 
         @ManyToOne
-        @JoinColumn(name = "answer_id")
-        private Task task;
+        @JoinColumn(name = "post_id")
+        private Post post;
 
-        public Answer(String answer) {
-            this.answer = answer;
+        public PostComment() {
         }
 
-        public Answer() {
+        public PostComment(String review) {
+            this.review = review;
         }
 
-        public long getId() {
+        public Long getId() {
             return id;
         }
 
-        public void setId(long id) {
+        public void setId(Long id) {
             this.id = id;
         }
 
-        public String getAnswer() {
-            return answer;
+        public String getReview() {
+            return review;
         }
 
-        public void setAnswer(String answer) {
-            this.answer = answer;
+        public void setReview(String review) {
+            this.review = review;
         }
 
-        public Task getTask() {
-            return task;
+        public Post getPost() {
+            return post;
         }
 
-        public void setTask(Task task) {
-            this.task = task;
+        public void setPost(Post post) {
+            this.post = post;
         }
 
         @Override
-        public String toString() {
-            return "Answer{" +
-                    "id=" + id +
-                    ", answer='" + answer + '\'' +
-                    ", task=" + task +
-                    '}';
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PostComment that = (PostComment) o;
+            return Objects.equals(id, that.id) &&
+                    Objects.equals(review, that.review);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, review);
         }
     }
 }

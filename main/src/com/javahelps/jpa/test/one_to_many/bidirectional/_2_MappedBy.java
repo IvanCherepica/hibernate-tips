@@ -1,15 +1,13 @@
 package com.javahelps.jpa.test.one_to_many.bidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
-import javafx.geometry.Pos;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-
-public class _1_Problem1 {
+public class _2_MappedBy {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
@@ -35,6 +33,9 @@ public class _1_Problem1 {
         Post post = entityManager.find(Post.class, 1L);
         post.getPostComments().remove(0);
 
+        PostComment postComment = entityManager.find(PostComment.class, 1L);
+        postComment.setPost(null);
+
         entityManager.getTransaction().commit();
 
         System.out.println();
@@ -57,6 +58,14 @@ public class _1_Problem1 {
         PostComment postComment4 = new PostComment("Comment 4");
         PostComment postComment5 = new PostComment("Comment 5");
 
+        entityManager.persist(post);
+
+        postComment1.setPost(post);
+        postComment2.setPost(post);
+        postComment3.setPost(post);
+        postComment4.setPost(post);
+        postComment5.setPost(post);
+
         entityManager.persist(postComment1);
         entityManager.persist(postComment2);
         entityManager.persist(postComment3);
@@ -72,7 +81,6 @@ public class _1_Problem1 {
 
         post.setPostComments(postComments);
 
-        entityManager.persist(post);
 
         entityManager.getTransaction().commit();
 
@@ -80,6 +88,7 @@ public class _1_Problem1 {
         System.out.println("After saving");
         System.out.println();
     }
+
 
 
     @Entity(name = "Post")
@@ -92,7 +101,7 @@ public class _1_Problem1 {
 
         private String title;
 
-        @OneToMany
+        @OneToMany(mappedBy = "post")
         private List<PostComment> postComments = new ArrayList<>();
 
         public Post() {
