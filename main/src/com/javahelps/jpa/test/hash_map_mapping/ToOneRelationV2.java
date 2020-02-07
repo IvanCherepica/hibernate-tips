@@ -1,13 +1,14 @@
 package com.javahelps.jpa.test.hash_map_mapping;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
+import org.hibernate.annotations.Fetch;
 
 import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class ManyToOneRelationV1 {
+public class ToOneRelationV2 {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Order.class, Seller.class, Item.class});
 
@@ -37,7 +38,8 @@ public class ManyToOneRelationV1 {
 
         entityManager.clear();
 
-        {
+        {   //join fetch подгружает атрибут значения, и из-за этого, хибернейт не может самостоятельно
+            //построить граф, в котором можно было бы выбрать сразу и ключ. n+1
             System.out.println();
             System.out.println("Before order loaded by jpql with join  fetch");
             System.out.println();
@@ -64,6 +66,65 @@ public class ManyToOneRelationV1 {
             System.out.println("After order loaded");
             System.out.println();
         }
+
+        entityManager.clear();
+
+        {   //то же самое, что и в верхнем join fetch
+            System.out.println();
+            System.out.println("Before order loaded by one graph");
+            System.out.println();
+
+            entityManager.getTransaction().begin();
+
+            EntityGraph<Order> entityGraph = entityManager.createEntityGraph(Order.class);
+            entityGraph.addAttributeNodes("sellerItemMap");
+
+            Map<String, Object> hints = new HashMap<>();
+            hints.put("javax.persistence.loadgraph", entityGraph);
+
+            Order order = entityManager.find(Order.class, 1L, hints);
+
+            for (Map.Entry<Seller, Item> entry : order.getSellerItemMap().entrySet()) {
+                System.out.println(entry.getKey().getName());
+                System.out.println(entry.getValue().getName());
+            }
+
+            entityManager.getTransaction().commit();
+
+            System.out.println();
+            System.out.println("After order loaded by one graph");
+            System.out.println();
+        }
+
+        entityManager.clear();
+
+        {   //использование сабграфа полностью решает эту проблему
+            System.out.println();
+            System.out.println("Before order loaded by graph with subgraph");
+            System.out.println();
+
+            entityManager.getTransaction().begin();
+
+            EntityGraph<Order> entityGraph = entityManager.createEntityGraph(Order.class);
+            Subgraph<Item> itemGraph = entityGraph.addSubgraph("sellerItemMap");
+            itemGraph.addAttributeNodes("seller");
+
+            Map<String, Object> hints = new HashMap<>();
+            hints.put("javax.persistence.loadgraph", entityGraph);
+
+            Order order = entityManager.find(Order.class, 1L, hints);
+
+            for (Map.Entry<Seller, Item> entry : order.getSellerItemMap().entrySet()) {
+                System.out.println(entry.getKey().getName());
+                System.out.println(entry.getValue().getName());
+            }
+
+            entityManager.getTransaction().commit();
+
+            System.out.println();
+            System.out.println("After order loaded by graph with subgraph");
+            System.out.println();
+        }
     }
 
     private static void saveData(EntityManager entityManager) {
@@ -79,21 +140,19 @@ public class ManyToOneRelationV1 {
         Order order = new Order("order 1");
 
         entityManager.persist(seller1);
-        entityManager.persist(item1);
         entityManager.persist(seller2);
-        entityManager.persist(item2);
         entityManager.persist(seller3);
-        entityManager.persist(item3);
-
-        item1.setSeller(seller1);
-        item2.setSeller(seller2);
-        item3.setSeller(seller3);
 
         entityManager.persist(order);
 
-        order.getSellerItemMap().put(seller1, item1);
-        order.getSellerItemMap().put(seller2, item2);
-        order.getSellerItemMap().put(seller3, item3);
+        order.addSellerAndItem(seller1, item1);
+        order.addSellerAndItem(seller2, item2);
+        order.addSellerAndItem(seller3, item3);
+
+        entityManager.persist(item1);
+        entityManager.persist(item2);
+        entityManager.persist(item3);
+
         entityManager.getTransaction().commit();
     }
 
@@ -108,11 +167,8 @@ public class ManyToOneRelationV1 {
         @Column(name = "name")
         private String name;
 
-        @OneToMany(cascade = CascadeType.ALL)
-        @JoinTable(name = "order_item_mapping",
-                joinColumns = {@JoinColumn(name = "order_id", referencedColumnName = "id")},
-                inverseJoinColumns = {@JoinColumn(name = "item_id", referencedColumnName = "id")})
-        @MapKeyJoinColumn(name = "seller_id")
+        @OneToMany(mappedBy="order")
+        @MapKeyJoinColumn(name="seller_id")
         private Map<Seller, Item> sellerItemMap = new HashMap<>();
 
         public Order() {
@@ -144,6 +200,13 @@ public class ManyToOneRelationV1 {
 
         public void setSellerItemMap(Map<Seller, Item> sellerItemMap) {
             this.sellerItemMap = sellerItemMap;
+        }
+
+        public void addSellerAndItem(Seller seller, Item item) {
+            item.setSeller(seller);
+            item.setOrder(this);
+
+            this.sellerItemMap.put(seller, item);
         }
 
         @Override
@@ -223,7 +286,11 @@ public class ManyToOneRelationV1 {
         @Column(name = "name")
         private String name;
 
-        @ManyToOne(cascade = CascadeType.ALL)
+        @OneToOne(fetch = FetchType.LAZY)
+        @JoinColumn(name = "order_id")
+        private Order order;
+
+        @OneToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "seller_id")
         private Seller seller;
 
@@ -256,6 +323,14 @@ public class ManyToOneRelationV1 {
 
         public void setSeller(Seller seller) {
             this.seller = seller;
+        }
+
+        public Order getOrder() {
+            return order;
+        }
+
+        public void setOrder(Order order) {
+            this.order = order;
         }
 
         @Override
