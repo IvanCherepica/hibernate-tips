@@ -32,6 +32,15 @@ public class PersistentHelper {
             return entityManager;
         }
 
+        PersistenceUnitInfoImpl persistenceUnitInfo = new PersistenceUnitInfoImpl(persistentClasses);
+
+        entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(persistenceUnitInfo, getPostgreSQLOption());
+        entityManager = entityManagerFactory.createEntityManager();
+
+        return entityManager;
+    }
+
+    private static Map<String, Object> getMysqlInnoDbOption() {
         Map<String, Object> options = new HashMap<>();
         options.put(DRIVER, "com.mysql.jdbc.Driver");
         options.put(URL, "jdbc:mysql://localhost:3306/hibernate_examples?characterEncoding=UTF-8&useUnicode=true&useSSL=false&serverTimezone=UTC");
@@ -42,11 +51,19 @@ public class PersistentHelper {
         options.put(HBM2DDL_AUTO, "create-drop");
         options.put(SHOW_SQL, true);
 
-        PersistenceUnitInfoImpl persistenceUnitInfo = new PersistenceUnitInfoImpl(persistentClasses);
+        return options;
+    }
 
-        entityManagerFactory = new HibernatePersistenceProvider().createContainerEntityManagerFactory(persistenceUnitInfo, options);
-        entityManager = entityManagerFactory.createEntityManager();
+    private static Map<String, Object> getPostgreSQLOption() {
+        Map<String, Object> options = new HashMap<>();
+        options.put(DRIVER, "org.postgresql.Driver");
+        options.put(URL, "jdbc:postgresql://localhost:5432/postgres_demo");
+        options.put(DIALECT, "org.hibernate.dialect.PostgreSQL95Dialect");
+        options.put(USER, "postgres");
+        options.put(PASS, "postgres");
+        options.put(HBM2DDL_AUTO, "create-drop");
+        options.put(SHOW_SQL, true);
 
-        return entityManager;
+        return options;
     }
 }
