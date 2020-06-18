@@ -61,7 +61,7 @@ public class PersistentHelper {
         options.put(DIALECT, "org.hibernate.dialect.PostgreSQL95Dialect");
         options.put(USER, "postgres");
         options.put(PASS, "postgres");
-        options.put(HBM2DDL_AUTO, "none");
+        options.put(HBM2DDL_AUTO, "create-drop");
         options.put(SHOW_SQL, true);
 
         return options;
