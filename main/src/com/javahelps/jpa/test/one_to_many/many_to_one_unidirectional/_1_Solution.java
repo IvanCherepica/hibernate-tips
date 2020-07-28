@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class _1_Test {
+public class _1_Solution {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
@@ -22,8 +22,9 @@ public class _1_Test {
         System.out.println("Before removing");
         System.out.println();
 
+        //На удаление комента тратится ровно один запрос
         PostComment postComment = entityManager.find(PostComment.class, 1L);
-        postComment.setPost(null);
+        entityManager.remove(postComment);
 
         entityManager.getTransaction().commit();
 
@@ -61,7 +62,7 @@ public class _1_Test {
         entityManager.persist(postComment4);
         entityManager.persist(postComment5);
 
-
+        //на добавление одного комента тратится ровно один запрос
         entityManager.getTransaction().commit();
 
         System.out.println();
