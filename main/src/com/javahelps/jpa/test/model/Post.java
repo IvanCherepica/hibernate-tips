@@ -58,6 +58,16 @@ public class Post {
         comment.setPost(null);
     }
 
+    @PrePersist
+    private void prePersist() {
+        System.out.println("Post pre persist");
+    }
+
+    @PreUpdate
+    private void preUpdate() {
+        System.out.println("Post pre update");
+    }
+
     @Override
     public String toString() {
         return "Post{" +

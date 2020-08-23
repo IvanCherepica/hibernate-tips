@@ -16,36 +16,19 @@ public class EagerBatchSize {
         saveData(entityManager);
         entityManager.clear();
 
-        {//самое плохое в использовании Eager или fetchMode Join - коллекция всегда будет загружена в память принудительно
-            //вне зависимости от того - намереваемся ли мы эту коллекцию испльзовать дальше, или нет
-            entityManager.getTransaction().begin();
-
-            System.out.println();
-            System.out.println("Before one stock select without collection call");
-            System.out.println();
-
-            Stock stock = entityManager.find(Stock.class, 1L);
-
-            System.out.println();
-            System.out.println("After one stock select without collection call");
-            System.out.println();
-
-            entityManager.getTransaction().commit();
-        }
-
         entityManager.clear();
 
         {//если мы достаём запись из базы, используя метод entitymanager, то срабатывает загрузка и данные достаются одним запросом; без n+1
             entityManager.getTransaction().begin();
 
             System.out.println();
-            System.out.println("Before one stock select");
+            System.out.println("Before one stockDailyRecord select");
             System.out.println();
 
             StockDailyRecord stockDailyRecord = entityManager.find(StockDailyRecord.class, 1L);
 
             System.out.println();
-            System.out.println("After one stock select");
+            System.out.println("After one stockDailyRecord select");
             System.out.println();
 
             System.out.println(stockDailyRecord.getStock());
@@ -55,14 +38,13 @@ public class EagerBatchSize {
 
         entityManager.clear();
 
-        {//указывая BatchSize мы говорим хибернейту, сколько коллекций надо будет загруить при обращении.
+        {//указывая BatchSize мы говорим хибернейту, сколько экземпляров Stock надо будет загруить при обращении.
             //т.е. сначала будет так же произведен запрос на выборку листа Stocs и уже после отправится ещё один запрос
             //уже на выборку коллекций. Если число, указанное в аннотации BatchSize больше или равно реальному числу
-            //связанных с объектом коллекций - будет отправлен только один запрос.
-            //Если число, указанное в batch size меньше чем число связанных с объектом коллекций, то будут производиться доплнительные запросы
-            //до тех пор, пока не будет выбрана свя информация из базы. Таким образом аннотация
-            //BatchSize не устраняет проблему n+1, а позволяет сгладить негативныое влияние дополнительных запросов
-            //(n/b)+1, где b это число, указанное в batch size
+            //связанных с объектом дочерних элементов - будет отправлен только один запрос.
+            //Если число, указанное в batch size меньше чем число связанных с объектом дочерних элементов,
+            // то будут производиться доплнительные запросы
+            //до тех пор, пока не будет выбрана свя информация из базы
             entityManager.getTransaction().begin();
 
             System.out.println();
@@ -166,7 +148,6 @@ public class EagerBatchSize {
 
         @ManyToOne(fetch = FetchType.EAGER)
         @JoinColumn(name = "stock_id")
-        @BatchSize(size = 10)
         private Stock stock;
 
         public StockDailyRecord() {
@@ -198,6 +179,7 @@ public class EagerBatchSize {
 
     @Entity
     @Table(name = "stock")
+    @BatchSize(size = 10)
     private static class Stock implements Serializable {
 
         @Id

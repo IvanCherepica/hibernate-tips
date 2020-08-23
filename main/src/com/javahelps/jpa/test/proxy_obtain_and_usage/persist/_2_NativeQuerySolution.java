@@ -16,22 +16,25 @@ public class _2_NativeQuerySolution {
         {
 
             System.out.println();
-            System.out.println("Before post comment updated");
+            System.out.println("Before post comment persist");
             System.out.println();
 
             entityManager.getTransaction().begin();
 
+            //что бы избежать дополнительного запроса на выборку из таблицы post - делаем сразу вставку в post_comment
             entityManager.createNativeQuery("INSERT INTO post_comment (post_id, review) values (1, 'post comment 2')").executeUpdate();
-
+            //в консоли нет ни одной записи "PostComment pre persist", значит жизненные циклы сущности не задействуются
+            //каскады не работают, проверки в Listeners тоже
             entityManager.getTransaction().commit();
 
             System.out.println();
-            System.out.println("After post comment updated");
+            System.out.println("After post comment persist");
             System.out.println();
         }
 
+        //однако, если теперь мы попытаемся достать только что сохраненный PostComment - отправится запрос, т.к. такого объекта нет в кэше
         PostComment postCommentFromCachce = entityManager.find(PostComment.class, 2L);
-
+        //так же достается post
         System.out.println(postCommentFromCachce.getPost());
         System.out.println();
     }

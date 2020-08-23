@@ -21,10 +21,11 @@ public class _1_Problem {
 
             entityManager.getTransaction().begin();
 
+            //так же имеем избыточный select на post
             Post post = entityManager.find(Post.class, 1L);
 
             PostComment postComment2 = entityManager.find(PostComment.class, 1L);
-
+            //в консоли "PostComment pre update". задействуются жизненные циклы сущности PostComment
             post.addComment(postComment2);
 
             entityManager.getTransaction().commit();
@@ -34,6 +35,7 @@ public class _1_Problem {
             System.out.println();
         }
 
+        //делается только один запрос на коллекцию Post, т.к. загружена она была в ленивом состоянии
         Post postFromCache = entityManager.find(Post.class, 1L);
         PostComment postCommentFromCachce = entityManager.find(PostComment.class, 1L);
 

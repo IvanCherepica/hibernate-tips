@@ -47,6 +47,16 @@ public class PostComment {
         this.post = post;
     }
 
+    @PrePersist
+    private void prePersist() {
+        System.out.println("PostComment pre persist");
+    }
+
+    @PreUpdate
+    private void preUpdate() {
+        System.out.println("PostComment pre update");
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

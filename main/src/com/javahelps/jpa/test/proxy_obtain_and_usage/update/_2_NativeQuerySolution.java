@@ -34,10 +34,13 @@ public class _2_NativeQuerySolution {
             System.out.println();
         }
 
+        //делается только один запрос на коллекцию Post, т.к. загружена она была в ленивом состоянии
         Post postFromCache = entityManager.find(Post.class, 1L);
         PostComment postCommentFromCachce = entityManager.find(PostComment.class, 1L);
 
         System.out.println(postFromCache.getComments());
+        //Однако, в ранее загруженном экземпляре postComment ссылка post всё ещё null. Здесь получает рассинхрон с бд
+        //Так же не были задействован жизненный цикл этой сущности. Каскады и проверки не отработали
         System.out.println(postCommentFromCachce.getPost());
         System.out.println();
 
@@ -47,6 +50,7 @@ public class _2_NativeQuerySolution {
         PostComment postCommentFromDB = entityManager.find(PostComment.class, 1L);
 
         System.out.println(postFromDB.getComments());
+        //рассинхрон исчезает только тогда, когда мы явно очищаем кэш первого уровня и загружаем данные снова
         System.out.println(postCommentFromDB.getPost());
     }
 

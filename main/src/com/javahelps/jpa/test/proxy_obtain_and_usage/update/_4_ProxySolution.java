@@ -23,6 +23,10 @@ public class _4_ProxySolution {
 
             Post post = entityManager.getReference(Post.class, 1L);
 
+            //Даже две сущности, между которыми строится связь, выбрать используя getReference
+            //Придется инициализирвоать одну, или несколько. В данном случае будет произведена выборка
+            //той сущности, которая изменяется. Хибернейт всё равно сделает SELECT той сущности
+            //чьи сеттеры будут вызваны
             PostComment postComment2 = entityManager.getReference(PostComment.class, 1L);
 
 //            post.addComment(postComment2);

@@ -25,7 +25,6 @@ public class _3_HqlSolution {
 
             entityManager.getTransaction().begin();
 
-//            entityManager.createNativeQuery("UPDATE post_comment SET post_id = 1 WHERE id = 1").executeUpdate();
             entityManager.createQuery("UPDATE PostComment pc SET pc.post = 1").executeUpdate();
 
             entityManager.getTransaction().commit();
@@ -35,10 +34,13 @@ public class _3_HqlSolution {
             System.out.println();
         }
 
+        //делается только один запрос на коллекцию Post, т.к. загружена она была в ленивом состоянии
         Post postFromCache = entityManager.find(Post.class, 1L);
         PostComment postCommentFromCachce = entityManager.find(PostComment.class, 1L);
 
         System.out.println(postFromCache.getComments());
+        //Однако, в ранее загруженном экземпляре postComment ссылка post всё ещё null. Здесь получает рассинхрон с бд
+        //Так же не были задействован жизненный цикл этой сущности. Каскады и проверки не отработали
         System.out.println(postCommentFromCachce.getPost());
         System.out.println();
 
@@ -48,6 +50,7 @@ public class _3_HqlSolution {
         PostComment postCommentFromDB = entityManager.find(PostComment.class, 1L);
 
         System.out.println(postFromDB.getComments());
+        //рассинхрон исчезает только тогда, когда мы явно очищаем кэш первого уровня и загружаем данные снова
         System.out.println(postCommentFromDB.getPost());
     }
 

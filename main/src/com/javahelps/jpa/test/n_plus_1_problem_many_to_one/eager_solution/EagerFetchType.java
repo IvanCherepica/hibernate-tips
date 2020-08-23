@@ -1,11 +1,13 @@
 package com.javahelps.jpa.test.n_plus_1_problem_many_to_one.eager_solution;
 
+import com.javahelps.jpa.test.n_plus_1_problem_many_to_one.fetch_graph_solution.Graph;
 import com.javahelps.jpa.test.util.PersistentHelper;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class EagerFetchType {
@@ -19,48 +21,68 @@ public class EagerFetchType {
             entityManager.getTransaction().begin();
 
             System.out.println();
-            System.out.println("Before one stock select");
+            System.out.println("Before list stock select");
             System.out.println();
 
-            Stock stock = entityManager.find(Stock.class, 1L);
+            List<StockDailyRecord> list = entityManager.createQuery("from " + StockDailyRecord.class.getName(), StockDailyRecord.class)
+                    .getResultList();
 
-            System.out.println();
-            System.out.println("After one stock select");
-            System.out.println();
-
-            for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
-                System.out.println(stockDailyRecord.getId());
+            for (StockDailyRecord dailyRecord : list) {
+                System.out.println(dailyRecord.getStock());
             }
+            System.out.println();
+            System.out.println("After list stock select");
+            System.out.println();
 
             entityManager.getTransaction().commit();
         }
 
         entityManager.clear();
 
-        {//однако, если мы получаем данные, используя запрос - то в таком случае так же будут подгружены сразу все коллекции, но уже в n+1 запросах
-            //для того, что бы исправить эту ситуацию требуется явно задать join fetch
+        {//если мы достаём запись из базы, используя метод entitymanager, то срабатывает загрузка и данные достаются одним запросом; без n+1
             entityManager.getTransaction().begin();
 
             System.out.println();
-            System.out.println("Before list select");
+            System.out.println("Before one stock select");
             System.out.println();
 
-            List<Stock> list = entityManager.createQuery("from " + Stock.class.getName(), Stock.class).getResultList();
+            StockDailyRecord dailyRecord = entityManager.find(StockDailyRecord.class, 1L);
+            StockDailyRecord dailyRecordFromQuery = entityManager.createQuery("from " + StockDailyRecord.class.getName() + " WHERE id=2", StockDailyRecord.class)
+                    .getSingleResult();
+
+            System.out.println(dailyRecord.getStock());
 
             System.out.println();
-            System.out.println("After list select");
+            System.out.println("After one stock select");
             System.out.println();
-
-            for (Stock stock : list) {
-
-                for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
-                    System.out.println(stockDailyRecord.getId());
-                }
-
-            }
 
             entityManager.getTransaction().commit();
         }
+
+//        {//однако, если мы получаем данные, используя запрос - то в таком случае так же будут подгружены сразу все коллекции, но уже в n+1 запросах
+//            //для того, что бы исправить эту ситуацию требуется явно задать join fetch
+//            entityManager.getTransaction().begin();
+//
+//            System.out.println();
+//            System.out.println("Before list select");
+//            System.out.println();
+//
+//            List<Stock> list = entityManager.createQuery("from " + Stock.class.getName(), Stock.class).getResultList();
+//
+//            System.out.println();
+//            System.out.println("After list select");
+//            System.out.println();
+//
+//            for (Stock stock : list) {
+//
+//                for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
+//                    System.out.println(stockDailyRecord.getId());
+//                }
+//
+//            }
+//
+//            entityManager.getTransaction().commit();
+//        }
     }
 
     private static void saveData(EntityManager entityManager) {
@@ -98,24 +120,17 @@ public class EagerFetchType {
         entityManager.persist(stock2);
         entityManager.persist(stock3);
 
-        Set<StockDailyRecord> stockDailyRecords1 = new HashSet<>();
-        stockDailyRecords1.add(stockDailyRecord1);
-        stockDailyRecords1.add(stockDailyRecord2);
-        stockDailyRecords1.add(stockDailyRecord3);
+        stockDailyRecord1.setStock(stock1);
+        stockDailyRecord2.setStock(stock1);
+        stockDailyRecord3.setStock(stock1);
 
-        Set<StockDailyRecord> stockDailyRecords2 = new HashSet<>();
-        stockDailyRecords2.add(stockDailyRecord4);
-        stockDailyRecords2.add(stockDailyRecord5);
-        stockDailyRecords2.add(stockDailyRecord6);
+        stockDailyRecord4.setStock(stock2);
+        stockDailyRecord5.setStock(stock2);
+        stockDailyRecord6.setStock(stock2);
 
-        Set<StockDailyRecord> stockDailyRecords3 = new HashSet<>();
-        stockDailyRecords3.add(stockDailyRecord7);
-        stockDailyRecords3.add(stockDailyRecord8);
-        stockDailyRecords3.add(stockDailyRecord9);
-
-        stock1.setStockDailyRecords(stockDailyRecords1);
-        stock2.setStockDailyRecords(stockDailyRecords2);
-        stock3.setStockDailyRecords(stockDailyRecords3);
+        stockDailyRecord7.setStock(stock3);
+        stockDailyRecord8.setStock(stock3);
+        stockDailyRecord9.setStock(stock3);
 
         entityManager.getTransaction().commit();
     }
@@ -128,6 +143,10 @@ public class EagerFetchType {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
+        @ManyToOne(fetch = FetchType.EAGER)
+        @JoinColumn(name = "stock_id")
+        private Stock stock;
+
         public StockDailyRecord() {
         }
 
@@ -139,6 +158,33 @@ public class EagerFetchType {
             this.id = id;
         }
 
+        public Stock getStock() {
+            return stock;
+        }
+
+        public void setStock(Stock stock) {
+            this.stock = stock;
+        }
+
+        @Override
+        public String toString() {
+            return "StockDailyRecord{" +
+                    "id=" + id +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            StockDailyRecord that = (StockDailyRecord) o;
+            return id == that.id;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id);
+        }
     }
 
     @Entity
@@ -149,9 +195,6 @@ public class EagerFetchType {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
-        @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-        private Set<StockDailyRecord> stockDailyRecords = new HashSet<>();
-
         public Stock() {
         }
 
@@ -159,12 +202,11 @@ public class EagerFetchType {
             this.id = id;
         }
 
-        public Set<StockDailyRecord> getStockDailyRecords() {
-            return this.stockDailyRecords;
-        }
-
-        public void setStockDailyRecords(Set<StockDailyRecord> stockDailyRecords) {
-            this.stockDailyRecords = stockDailyRecords;
+        @Override
+        public String toString() {
+            return "Stock{" +
+                    "id=" + id +
+                    '}';
         }
     }
 }

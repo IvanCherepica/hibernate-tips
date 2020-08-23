@@ -203,7 +203,6 @@ public class EagerBatchSize {
         private long id;
 
         @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//        @BatchSize(size = 2)
         @BatchSize(size = 10)
         private Set<StockDailyRecord> stockDailyRecords = new HashSet<>();
 
