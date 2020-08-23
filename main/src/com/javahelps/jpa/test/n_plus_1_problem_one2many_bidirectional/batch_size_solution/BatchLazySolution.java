@@ -18,26 +18,7 @@ public class BatchLazySolution {
         saveData(entityManager);
         entityManager.clear();
 
-        {//при использовании ленивой загрузки мы лишаемся необходимости каждый раз загружать в память всю информацию
-            entityManager.getTransaction().begin();
-
-            System.out.println();
-            System.out.println("Before one stock select without collection call");
-            System.out.println();
-
-            Stock stock = entityManager.find(Stock.class, 1L);
-            StockDailyRecord stockDailyRecord = entityManager.find(StockDailyRecord.class, 1L);
-
-            System.out.println();
-            System.out.println("After one stock select without collection call");
-            System.out.println();
-
-            entityManager.getTransaction().commit();
-        }
-
-        entityManager.clear();
-
-        {//используя FetchMode.SUBSELECT мы и на таком запросе приобретаем один дополнительный запрос (но не более_
+        {//Связь OneToMany - после обращения к ленивой коллекции сразу одним запросом получаем все дочерние элементы
             entityManager.getTransaction().begin();
 
             System.out.println();
@@ -45,7 +26,6 @@ public class BatchLazySolution {
             System.out.println();
 
             Stock stock = entityManager.find(Stock.class, 1L);
-            StockDailyRecord stockDailyRecord = entityManager.find(StockDailyRecord.class, 1L);
 
             System.out.println();
             System.out.println("After one stock select");
@@ -55,75 +35,30 @@ public class BatchLazySolution {
                 System.out.println(stockDailyRecord1.getId());
             }
 
-            System.out.println(stockDailyRecord.getStock());
-
             entityManager.getTransaction().commit();
         }
 
         entityManager.clear();
 
-        {//однако, если запросов на загрузку коллекций у нас много - то subselect объеденит их в один. в итоге устранив n+1
+        {//Так же, если сделать выборку StockDailyRecord - хибернейт выгрузит сразу 10 связанных Stock
             entityManager.getTransaction().begin();
 
             System.out.println();
-            System.out.println("Before list select");
+            System.out.println("Before StockDailyRecord list select");
             System.out.println();
 
-//            List<Stock> list = entityManager.createQuery("from " + Stock.class.getName(), Stock.class).getResultList();
             List<StockDailyRecord> stockDailyRecords = entityManager.createQuery(
                     "FROM "+StockDailyRecord.class.getName(), StockDailyRecord.class
             )
                     .getResultList();
 
             System.out.println();
-            System.out.println("After list select");
+            System.out.println("After StockDailyRecord list select");
             System.out.println();
-
-//            for (Stock stock : list) {
-//
-//                for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
-//                    System.out.println(stockDailyRecord.getId());
-//                }
-//
-//            }
 
             for (StockDailyRecord stockDailyRecord : stockDailyRecords) {
                 System.out.println(stockDailyRecord.getStock());
             }
-
-            entityManager.getTransaction().commit();
-        }
-
-        entityManager.clear();
-
-        {//однако, если запросов на загрузку коллекций у нас много - то subselect объеденит их в один. в итоге устранив n+1
-            entityManager.getTransaction().begin();
-
-            System.out.println();
-            System.out.println("Before native list select");
-            System.out.println();
-
-            List<Stock> list = entityManager.createNativeQuery("SELECT * FROM stock", Stock.class).getResultList();
-//            List<StockDailyRecord> stockDailyRecords = entityManager.createNativeQuery(
-//                    "SELECT * FROM stock_daily_record", StockDailyRecord.class
-//            )
-//                    .getResultList();
-
-            System.out.println();
-            System.out.println("After native list select");
-            System.out.println();
-
-            for (Stock stock : list) {
-
-                for (StockDailyRecord stockDailyRecord : stock.getStockDailyRecords()) {
-                    System.out.println(stockDailyRecord.getId());
-                }
-
-            }
-
-//            for (StockDailyRecord stockDailyRecord : stockDailyRecords) {
-//                System.out.println(stockDailyRecord.getStock());
-//            }
 
             entityManager.getTransaction().commit();
         }
@@ -184,12 +119,11 @@ public class BatchLazySolution {
     @Table(name = "stock_daily_record")
     private static class StockDailyRecord {
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         @ManyToOne(fetch = FetchType.LAZY)
         @JoinColumn(name = "stock_id")
-        @BatchSize(size = 10)
         private Stock stock;
 
         public StockDailyRecord() {
@@ -221,10 +155,11 @@ public class BatchLazySolution {
 
     @Entity
     @Table(name = "stock")
+    @BatchSize(size = 10)
     private static class Stock implements Serializable {
 
         @Id
-        @GeneratedValue
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
         private long id;
 
         @OneToMany(mappedBy = "stock", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
