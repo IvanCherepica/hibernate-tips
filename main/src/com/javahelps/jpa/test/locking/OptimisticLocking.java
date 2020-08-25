@@ -72,6 +72,9 @@ public class OptimisticLocking {
 
         private Integer itemAmount = 5;
 
+        @Version
+        private Integer version;
+
         public Product() {
         }
 
