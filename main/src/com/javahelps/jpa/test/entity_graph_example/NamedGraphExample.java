@@ -103,9 +103,6 @@ public class NamedGraphExample {
         @GeneratedValue
         private Long id;
 
-        @Version
-        private int version;
-
         private String orderNumber;
 
         @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
@@ -114,27 +111,12 @@ public class NamedGraphExample {
         public Order() {
         }
 
-        public Order(int version, String orderNumber, Set<OrderItem> items) {
-            this.version = version;
-            this.orderNumber = orderNumber;
-            this.items = items;
-        }
-
-
         public Long getId() {
             return id;
         }
 
         public void setId(Long id) {
             this.id = id;
-        }
-
-        public int getVersion() {
-            return version;
-        }
-
-        public void setVersion(int version) {
-            this.version = version;
         }
 
         public String getOrderNumber() {
@@ -161,9 +143,6 @@ public class NamedGraphExample {
         @GeneratedValue
         private Long id;
 
-        @Version
-        private int version;
-
         private int quantity;
 
         @ManyToOne
@@ -175,27 +154,12 @@ public class NamedGraphExample {
         public OrderItem() {
         }
 
-        public OrderItem(int version, int quantity, Order order, Product product) {
-            this.version = version;
-            this.quantity = quantity;
-            this.order = order;
-            this.product = product;
-        }
-
         public Long getId() {
             return id;
         }
 
         public void setId(Long id) {
             this.id = id;
-        }
-
-        public int getVersion() {
-            return version;
-        }
-
-        public void setVersion(int version) {
-            this.version = version;
         }
 
         public int getQuantity() {
@@ -230,17 +194,9 @@ public class NamedGraphExample {
         @GeneratedValue
         private Long id;
 
-        @Version
-        private int version;
-
         private String name;
 
         public Product() {
-        }
-
-        public Product(int version, String name) {
-            this.version = version;
-            this.name = name;
         }
 
         public Long getId() {
@@ -249,14 +205,6 @@ public class NamedGraphExample {
 
         public void setId(Long id) {
             this.id = id;
-        }
-
-        public int getVersion() {
-            return version;
-        }
-
-        public void setVersion(int version) {
-            this.version = version;
         }
 
         public String getName() {

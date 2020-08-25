@@ -132,9 +132,6 @@ public class _3_SqlResultSetComplexSolution {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "id", updatable = false, nullable = false)
         private Long id;
-        @Version
-        @Column(name = "version")
-        private int version;
 
         @Column
         private String firstName;
@@ -148,14 +145,6 @@ public class _3_SqlResultSetComplexSolution {
 
         public void setId(final Long id) {
             this.id = id;
-        }
-
-        public int getVersion() {
-            return this.version;
-        }
-
-        public void setVersion(final int version) {
-            this.version = version;
         }
 
         @Override
@@ -220,9 +209,6 @@ public class _3_SqlResultSetComplexSolution {
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "id", updatable = false, nullable = false)
         private Long id;
-        @Version
-        @Column(name = "version")
-        private int version;
 
         @Column
         private String title;
@@ -236,14 +222,6 @@ public class _3_SqlResultSetComplexSolution {
 
         public void setId(final Long id) {
             this.id = id;
-        }
-
-        public int getVersion() {
-            return this.version;
-        }
-
-        public void setVersion(final int version) {
-            this.version = version;
         }
 
         public String getTitle() {

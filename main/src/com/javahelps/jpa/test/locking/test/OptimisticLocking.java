@@ -1,22 +1,18 @@
-package com.javahelps.jpa.test.locking;
+package com.javahelps.jpa.test.locking.test;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
 import javax.persistence.*;
-import java.util.Collection;
 
-public class PessimisticRead {
-
-
+public class OptimisticLocking {
     public static void main(String[] args) throws InterruptedException {
-
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Item.class});
         saveData(entityManager);
         entityManager.clear();
 
         for (int i = 0; i < 5; i++) {
             EntityManager entityManager1 = PersistentHelper.getEntityManager(new Class[] {Item.class});
-            new ItemUpdater(entityManager1, "updater "+i, 1L).start();
+            new ItemUpdater(entityManager1, "updater "+(i+1), 1L).start();
         }
 
         //Ждем, пока будут выполнены все операции в новых потоках
@@ -28,8 +24,7 @@ public class PessimisticRead {
 
         Item item = entityManager.find(Item.class, 1L);
         System.out.println();
-        System.out.println("sale count - " + item.getSaleCount());
-//        System.out.println("version - " + item.getVersion());
+        System.out.println("name - " + item.getName());
         System.out.println();
 
         entityManager.getTransaction().commit();
@@ -50,14 +45,11 @@ public class PessimisticRead {
         public void run(){
             entityManager.getTransaction().begin();
 
-            System.out.println("Thread: "+super.getName()+". Чтение");
             Item item = entityManager.find(Item.class, clientId);
-            entityManager.lock(item, LockModeType.PESSIMISTIC_READ);
-            int currentSaleCount = item.getSaleCount();
-            item.setSaleCount(currentSaleCount+1);
+            entityManager.lock(item, LockModeType.OPTIMISTIC);
+            item.setName(super.getName());
             entityManager.merge(item);
 
-            System.out.println("Thread: "+super.getName()+". Запись");
             entityManager.getTransaction().commit();
 
         }
@@ -87,8 +79,8 @@ public class PessimisticRead {
     @Table(name = "item")
     private static class Item {
 
-//        @Version
-//        private long version;
+        @Version
+        private long version;
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -105,13 +97,13 @@ public class PessimisticRead {
             this.name = name;
         }
 
-//        public long getVersion() {
-//            return version;
-//        }
-//
-//        public void setVersion(long version) {
-//            this.version = version;
-//        }
+        public long getVersion() {
+            return version;
+        }
+
+        public void setVersion(long version) {
+            this.version = version;
+        }
 
         public Long getId() {
             return id;

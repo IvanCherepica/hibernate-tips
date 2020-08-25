@@ -1,10 +1,11 @@
-package com.javahelps.jpa.test.locking;
+package com.javahelps.jpa.test.locking.test;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
 
 import javax.persistence.*;
 
-public class OptimisticForceIncrement {
+public class NoLocking {
+
     public static void main(String[] args) throws InterruptedException {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Item.class});
         saveData(entityManager);
@@ -12,7 +13,8 @@ public class OptimisticForceIncrement {
 
         for (int i = 0; i < 5; i++) {
             EntityManager entityManager1 = PersistentHelper.getEntityManager(new Class[] {Item.class});
-            new ItemUpdater(entityManager1, "updater 1", 1L).start();
+            ItemUpdater itemUpdater = new ItemUpdater(entityManager1, "updater "+(i+1), 1L);
+            itemUpdater.start();
         }
 
         //Ждем, пока будут выполнены все операции в новых потоках
@@ -24,11 +26,11 @@ public class OptimisticForceIncrement {
 
         Item item = entityManager.find(Item.class, 1L);
         System.out.println();
-        System.out.println("sale count - " + item.getSaleCount());
-        System.out.println("version - " + item.getVersion());//2 мб потому что поле быльо изменено. Разобратьс
+        System.out.println("name - " + item.getName());
         System.out.println();
 
         entityManager.getTransaction().commit();
+
     }
 
     static class ItemUpdater extends Thread {
@@ -47,9 +49,7 @@ public class OptimisticForceIncrement {
             entityManager.getTransaction().begin();
 
             Item item = entityManager.find(Item.class, clientId);
-            entityManager.lock(item, LockModeType.OPTIMISTIC_FORCE_INCREMENT);
-            int currentSaleCount = item.getSaleCount();
-            item.setSaleCount(currentSaleCount+1);
+            item.setName(super.getName());
             entityManager.merge(item);
 
             entityManager.getTransaction().commit();
@@ -60,19 +60,8 @@ public class OptimisticForceIncrement {
     private static void saveData(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
-        Item item1 = new Item("item 1");
-        Item item2 = new Item("item 2");
-        Item item3 = new Item("item 3");
-        Item item4 = new Item("item 4");
-        Item item5 = new Item("item 5");
-        Item item6 = new Item("item 6");
-
-        entityManager.persist(item1);
-        entityManager.persist(item2);
-        entityManager.persist(item3);
-        entityManager.persist(item4);
-        entityManager.persist(item5);
-        entityManager.persist(item6);
+        Item item = new Item("item 1");
+        entityManager.persist(item);
 
         entityManager.getTransaction().commit();
     }
@@ -80,9 +69,6 @@ public class OptimisticForceIncrement {
     @Entity
     @Table(name = "item")
     private static class Item {
-
-        @Version
-        private long version;
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -97,14 +83,6 @@ public class OptimisticForceIncrement {
 
         public Item(String name) {
             this.name = name;
-        }
-
-        public long getVersion() {
-            return version;
-        }
-
-        public void setVersion(long version) {
-            this.version = version;
         }
 
         public Long getId() {
