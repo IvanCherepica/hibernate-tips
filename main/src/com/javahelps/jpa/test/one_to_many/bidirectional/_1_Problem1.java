@@ -93,6 +93,7 @@ public class _1_Problem1 {
         private String title;
 
         @OneToMany
+        @JoinColumn(name = "post_id")
         private List<PostComment> postComments = new ArrayList<>();
 
         public Post() {

@@ -56,13 +56,20 @@ public class PersistentHelper {
 
     private static Map<String, Object> getPostgreSQLOption() {
         Map<String, Object> options = new HashMap<>();
+//        org.postgresql.Driver
         options.put(DRIVER, "org.postgresql.Driver");
-        options.put(URL, "jdbc:postgresql://localhost:5432/postgres_demo");
+        options.put(URL, "jdbc:postgresql://localhost:5432/postgres_demo?reWriteBatchedInserts=true");
         options.put(DIALECT, "org.hibernate.dialect.PostgreSQL95Dialect");
         options.put(USER, "postgres");
         options.put(PASS, "postgres");
-        options.put(HBM2DDL_AUTO, "create-drop");
+        options.put(HBM2DDL_AUTO, "create");
         options.put(SHOW_SQL, true);
+
+        options.put(STATEMENT_BATCH_SIZE, "20");
+        options.put(ORDER_INSERTS, "true");
+        options.put(ORDER_UPDATES, "true");
+        options.put(BATCH_VERSIONED_DATA, "true");
+        options.put(GENERATE_STATISTICS, "true");
 
         return options;
     }

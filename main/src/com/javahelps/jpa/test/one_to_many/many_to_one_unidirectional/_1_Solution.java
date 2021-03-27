@@ -1,5 +1,6 @@
 package com.javahelps.jpa.test.one_to_many.many_to_one_unidirectional;
 
+import com.javahelps.jpa.test.one_to_many.one_to_many_unidirectional._4_Problem;
 import com.javahelps.jpa.test.util.PersistentHelper;
 
 import javax.persistence.*;
@@ -46,7 +47,7 @@ public class _1_Solution {
         PostComment postComment2 = new PostComment("Comment 2");
         PostComment postComment3 = new PostComment("Comment 3");
         PostComment postComment4 = new PostComment("Comment 4");
-        PostComment postComment5 = new PostComment("Comment 5");
+        PostComment postComment5 = new PostComment();
 
         postComment1.setPost(post);
         postComment2.setPost(post);

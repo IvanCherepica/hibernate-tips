@@ -4,8 +4,7 @@ import com.javahelps.jpa.test.util.PersistentHelper;
 
 import javax.persistence.*;
 
-public class NoLocking {
-
+public class VersionOptimisticLocking {
     public static void main(String[] args) throws InterruptedException {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Product.class});
         saveData(entityManager);
@@ -36,7 +35,8 @@ public class NoLocking {
             entityManager2.getTransaction().commit();
         }
 
-        {//Иван доделывает свою операцию и комитит изменения
+        {//Иван доделывает свою операцию и комитит изменения - на выходе получает ошибку, т.к. его транзакция на момент
+            //комита имеет неактуальные данные. В этом случае Ивану нужно снова запросить данные и повторить изменения
             ivanProduct.setItemAmount(ivanProduct.getItemAmount()-1);
 
             entityManager.getTransaction().commit();
@@ -46,9 +46,6 @@ public class NoLocking {
 
         entityManager.getTransaction().begin();
 
-        //На выходе получаем itemAmount 4, вместо 0, т.к. Антон фактически забрал все продукты
-        //Последним редактором будет Иван, хотя Антон начал действовать позже.
-        //Информация о действиях Антона и результаты этих действий будут утеряны, а Иван получит несуществующую единицу продукта
         Product product = entityManager.find(Product.class, 1L);
         System.out.println(product.getItemAmount());
         System.out.println(product.getLastUpdater());
@@ -76,6 +73,9 @@ public class NoLocking {
         private String lastUpdater;
 
         private Integer itemAmount = 5;
+
+        @Version
+        private Integer version;
 
         public Product() {
         }

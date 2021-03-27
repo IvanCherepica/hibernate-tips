@@ -1,13 +1,21 @@
-package com.javahelps.jpa.test.locking;
+package com.javahelps.jpa.test.locking.versionless_optimistic;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.OptimisticLockType;
+import org.hibernate.annotations.OptimisticLocking;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.EntityManager;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-public class NoLocking {
+public class OverlappingSolution {
 
     public static void main(String[] args) throws InterruptedException {
-        EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Product.class});
+        EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {OverlappingSolution.Product.class});
         saveData(entityManager);
         entityManager.clear();
 
@@ -15,28 +23,29 @@ public class NoLocking {
         //единицу, а Антон все 5. Учитывая, что на складе в данный момент присутствует только 5 единиц эотго продукта
         //Так же, система регистрирует автора последних изменений по данному продукту
 
-        Product ivanProduct = null;
+        OverlappingSolution.Product ivanProduct = null;
 
         {//Начинает Иван
             entityManager.getTransaction().begin();
 
-            ivanProduct = entityManager.find(Product.class, 1L);
+            ivanProduct = entityManager.find(OverlappingSolution.Product.class, 1L);
 
             ivanProduct.setLastUpdater("Иван");
         }
 
         {//Пока Иван меняет данные - врывается Антон и забирает все 5 имеющихся единиц товара
-            EntityManager entityManager2 = PersistentHelper.getEntityManager(new Class[] {Product.class});
+            EntityManager entityManager2 = PersistentHelper.getEntityManager(new Class[] {OverlappingSolution.Product.class});
             entityManager2.getTransaction().begin();
 
-            Product product = entityManager2.find(Product.class, 1L);
+            OverlappingSolution.Product product = entityManager2.find(OverlappingSolution.Product.class, 1L);
             product.setLastUpdater("Антон");
             product.setItemAmount(product.getItemAmount()-5);
 
             entityManager2.getTransaction().commit();
         }
 
-        {//Иван доделывает свою операцию и комитит изменения
+        {//Иван доделывает свою операцию и комитит изменения - на выходе получает ошибку, т.к. его транзакция на момент
+            //комита имеет неактуальные данные. В этом случае Ивану нужно снова запросить данные и повторить изменения
             ivanProduct.setItemAmount(ivanProduct.getItemAmount()-1);
 
             entityManager.getTransaction().commit();
@@ -46,10 +55,7 @@ public class NoLocking {
 
         entityManager.getTransaction().begin();
 
-        //На выходе получаем itemAmount 4, вместо 0, т.к. Антон фактически забрал все продукты
-        //Последним редактором будет Иван, хотя Антон начал действовать позже.
-        //Информация о действиях Антона и результаты этих действий будут утеряны, а Иван получит несуществующую единицу продукта
-        Product product = entityManager.find(Product.class, 1L);
+        OverlappingSolution.Product product = entityManager.find(OverlappingSolution.Product.class, 1L);
         System.out.println(product.getItemAmount());
         System.out.println(product.getLastUpdater());
     }
@@ -57,7 +63,7 @@ public class NoLocking {
     private static void saveData(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
-        Product product = new Product("item 1");
+        OverlappingSolution.Product product = new OverlappingSolution.Product("item 1");
         entityManager.persist(product);
 
         entityManager.getTransaction().commit();
@@ -65,6 +71,8 @@ public class NoLocking {
 
     @Entity
     @Table(name = "product")
+    @DynamicUpdate
+    @OptimisticLocking(type = OptimisticLockType.ALL)
     private static class Product {
 
         @Id

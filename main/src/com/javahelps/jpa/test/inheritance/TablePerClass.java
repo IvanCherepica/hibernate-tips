@@ -23,7 +23,7 @@ public class TablePerClass {
             entityManager.getTransaction().begin();
 
             List<Employee> employees =
-                    entityManager.createQuery("FROM " + Employee.class.getName(), Employee.class).getResultList();
+                    entityManager.createQuery("FROM " + Employee.class.getName() + " e WHERE e.department.id=1", Employee.class).getResultList();
 
             employees.forEach(System.out::println);
 

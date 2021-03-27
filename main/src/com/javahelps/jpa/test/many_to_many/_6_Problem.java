@@ -13,24 +13,32 @@ public class _6_Problem {
 
         saveObjects(entityManager);
 
-        entityManager.getTransaction().begin();
+//        Tag tag = entityManager.createQuery("SELECT t FROM " + Tag.class.getName() + " t WHERE t.id = 1", Tag.class).getSingleResult();
 
-        Post post = entityManager.find(Post.class, 1L);
-        entityManager.remove(post);
+        Tag tag = (Tag) entityManager.createNativeQuery("SELECT * FROM tag t WHERE t.id = 1", Tag.class).getSingleResult();
 
-        //ничего не произошло. в базе осталась запись post с идентификатором 1
-        entityManager.getTransaction().commit();
+        entityManager.contains(tag);
+        System.out.println();
 
-        entityManager.getTransaction().begin();
 
-        //всё на месте - запись есть, не смотня на предшествующую попытку удаления
-        Post post1 = entityManager.find(Post.class, 1L);
-        System.out.println(post1);
-
-        entityManager.getTransaction().commit();
-
-        //подобное поведение можно объяснить наличием constraint`ов в базе, которые не позволяют удалить связанные
-        //сущности, т.к. смежная таблица в этом случае будет ссылаться на несуществующую запись
+//        entityManager.getTransaction().begin();
+//
+//        Post post = entityManager.find(Post.class, 1L);
+//        entityManager.remove(post);
+//
+//        //ничего не произошло. в базе осталась запись post с идентификатором 1
+//        entityManager.getTransaction().commit();
+//
+//        entityManager.getTransaction().begin();
+//
+//        //всё на месте - запись есть, не смотня на предшествующую попытку удаления
+//        Post post1 = entityManager.find(Post.class, 1L);
+//        System.out.println(post1);
+//
+//        entityManager.getTransaction().commit();
+//
+//        //подобное поведение можно объяснить наличием constraint`ов в базе, которые не позволяют удалить связанные
+//        //сущности, т.к. смежная таблица в этом случае будет ссылаться на несуществующую запись
     }
 
     private static void saveObjects(EntityManager entityManager) {

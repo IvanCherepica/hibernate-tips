@@ -1,5 +1,6 @@
 package com.javahelps.jpa.test.one_to_many.bidirectional;
 
+import com.javahelps.jpa.test.one_to_many.many_to_one_unidirectional._1_Solution;
 import com.javahelps.jpa.test.util.PersistentHelper;
 
 import javax.persistence.*;
@@ -11,6 +12,22 @@ public class _10_Solution3 {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Task.class, Answer.class});
 
         saveTaskWithAnswers(entityManager);
+        
+        
+        entityManager.clear();
+        
+        entityManager.getTransaction().begin();
+
+        List<Task> tasks = entityManager.createQuery(
+                "SELECT DISTINCT t FROM " + Task.class.getName() + " t JOIN FETCH t.answers a " +
+                        "WHERE a.answer IS NOT NULL",
+                Task.class
+        )
+                .getResultList();
+
+        entityManager.getTransaction().commit();
+        
+        
 
         //начинаем новую транзакцию
         entityManager.getTransaction().begin();
@@ -47,7 +64,7 @@ public class _10_Solution3 {
         //создаём три ответа; состояние объектов - transient
         Answer answer1 = new Answer("Answer 1");
         Answer answer2 = new Answer("Answer 2");
-        Answer answer3 = new Answer("Answer 3");
+        Answer answer3 = new Answer();
 
         //создаём задачу, тоже transient
         Task task = new Task("Task 1");

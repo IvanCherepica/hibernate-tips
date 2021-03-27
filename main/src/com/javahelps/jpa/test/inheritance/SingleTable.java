@@ -1,6 +1,8 @@
 package com.javahelps.jpa.test.inheritance;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
+import org.hibernate.annotations.Polymorphism;
+import org.hibernate.annotations.PolymorphismType;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -70,6 +72,28 @@ public class SingleTable {
 
             List<Department> employees =
                     entityManager.createQuery("SELECT DISTINCT d FROM " + Department.class.getName() + " d JOIN FETCH d.employees", Department.class).getResultList();
+
+            employees.forEach(System.out::println);
+
+            entityManager.getTransaction().commit();
+
+            System.out.println();
+            System.out.println("After Department select");
+            System.out.println();
+        }
+
+        entityManager.clear();
+
+        {   //т.к. тип соединения внутренний - мы получим 2 department. фиксится использованием distinct
+            System.out.println();
+            System.out.println("Before Department select");
+            System.out.println();
+
+            entityManager.getTransaction().begin();
+
+            List<Department> employees =
+                    entityManager.createQuery("SELECT DISTINCT d FROM " + Department.class.getName() +
+                            " d LEFT JOIN " + Employee.class.getName() + " m ON m.department = d.id AND TYPE(m) = " + Manager.class.getName(), Department.class).getResultList();
 
             employees.forEach(System.out::println);
 
@@ -206,7 +230,6 @@ public class SingleTable {
     @Entity
     @Table(name = "employee")
     @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-//    @DiscriminatorColumn(name = "dtype")
     static abstract class Employee {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -286,7 +309,7 @@ public class SingleTable {
     }
 
     @Entity
-//    @DiscriminatorValue("Manager")
+    @DiscriminatorValue("Manager")
     static class Manager extends Employee {
 
         @OneToMany(mappedBy = "manager", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -321,7 +344,7 @@ public class SingleTable {
     }
 
     @Entity
-//    @DiscriminatorValue("Expert")
+    @DiscriminatorValue("Expert")
     static class Expert extends Employee {
 
         @ManyToOne(fetch = FetchType.LAZY)

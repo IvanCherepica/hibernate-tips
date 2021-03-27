@@ -1,6 +1,7 @@
 package com.javahelps.jpa.test.one_to_many.one_to_many_unidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
+import javafx.geometry.Pos;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -11,10 +12,31 @@ public class _4_Problem {
     public static void main(String[] args) {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
+        //при сохранении в бд происходит сначала вставка в таблицу post, потом в post_comment, а затем делается
+        //update post_comment set post_id=? where id=?
+        //т.е. вместо двух запросов мы получаем 3
         saveData(entityManager);
         entityManager.clear();
         System.out.println();
         System.out.println("--после вставки данных--");
+        System.out.println();
+
+        System.out.println();
+        System.out.println("Обычное удаление элемента");
+        System.out.println();
+
+        entityManager.getTransaction().begin();
+
+        PostComment postComment = entityManager.find(PostComment.class, 2L);
+        entityManager.remove(postComment);
+
+
+        //Всё ок, получаем 1 запрос на удаление
+        entityManager.getTransaction().commit();
+
+
+        System.out.println();
+        System.out.println("Удаление через коллекцию");
         System.out.println();
 
         entityManager.getTransaction().begin();
@@ -22,6 +44,8 @@ public class _4_Problem {
         Post post = entityManager.find(Post.class, 1L);
         post.getComments().remove(0);
 
+        //перед удалением записи из таблицы post_comment происходит update post_comment set post_id=null where post_id=? and id=?
+        //вместо 1 запроса мы получаем 2
         entityManager.getTransaction().commit();
 
     }
@@ -34,11 +58,11 @@ public class _4_Problem {
 
         post1.getComments().add(new PostComment("Comment 1"));
         post1.getComments().add(new PostComment("Comment 2"));
-        post1.getComments().add(new PostComment("Comment 3"));
+        post1.getComments().add(new PostComment());
 
         post2.getComments().add(new PostComment("Comment 4"));
         post2.getComments().add(new PostComment("Comment 5"));
-        post2.getComments().add(new PostComment("Comment 6"));
+        post2.getComments().add(new PostComment());
 
         entityManager.persist(post1);
         entityManager.persist(post2);
@@ -57,6 +81,8 @@ public class _4_Problem {
         private String title;
 
         @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+//        @JoinColumn(name = "post_id")
+//        @OneToMany
         @JoinColumn(name = "post_id")
         private List<PostComment> comments = new ArrayList<>();
 
@@ -115,6 +141,9 @@ public class _4_Problem {
         private Long id;
 
         private String review;
+
+//        @ManyToOne(fetch = FetchType.LAZY)
+        private PostComment postComment;
 
         public PostComment() {
         }

@@ -1,12 +1,23 @@
-package com.javahelps.jpa.test.locking;
+package com.javahelps.jpa.test.locking.versionless_optimistic;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
+import org.hibernate.Session;
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.OptimisticLockType;
+import org.hibernate.annotations.OptimisticLocking;
+import org.hibernate.annotations.SelectBeforeUpdate;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.EntityManager;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
-public class OptimisticLocking {
+public class DetachedProblemSolution_2_ {
+
     public static void main(String[] args) throws InterruptedException {
-        EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Product.class});
+        EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {DetachedProblemSolution_2_.Product.class});
         saveData(entityManager);
         entityManager.clear();
 
@@ -14,31 +25,34 @@ public class OptimisticLocking {
         //единицу, а Антон все 5. Учитывая, что на складе в данный момент присутствует только 5 единиц эотго продукта
         //Так же, система регистрирует автора последних изменений по данному продукту
 
-        Product ivanProduct = null;
+        DetachedProblemSolution_2_.Product ivanProduct = null;
 
         {//Начинает Иван
             entityManager.getTransaction().begin();
 
-            ivanProduct = entityManager.find(Product.class, 1L);
+            ivanProduct = entityManager.find(DetachedProblemSolution_2_.Product.class, 1L);
+
+            //моделируем ситуацию, в которой объект был отсоединен от сесси
+            entityManager.detach(ivanProduct);
 
             ivanProduct.setLastUpdater("Иван");
         }
 
         {//Пока Иван меняет данные - врывается Антон и забирает все 5 имеющихся единиц товара
-            EntityManager entityManager2 = PersistentHelper.getEntityManager(new Class[] {Product.class});
+            EntityManager entityManager2 = PersistentHelper.getEntityManager(new Class[] {DetachedProblemSolution_2_.Product.class});
             entityManager2.getTransaction().begin();
 
-            Product product = entityManager2.find(Product.class, 1L);
-            product.setLastUpdater("Антон");
+            DetachedProblemSolution_2_.Product product = entityManager2.find(DetachedProblemSolution_2_.Product.class, 1L);
             product.setItemAmount(product.getItemAmount()-5);
-
+            product.setLastUpdater("Антон");
             entityManager2.getTransaction().commit();
         }
 
-        {//Иван доделывает свою операцию и комитит изменения - на выходе получает ошибку, т.к. его транзакция на момент
-            //комита имеет неактуальные данные. В этом случае Ивану нужно снова запросить данные и повторить изменения
+        {//Используем метод update сессии для сохранения состояния detached объекта - получаем потерянный update
+
             ivanProduct.setItemAmount(ivanProduct.getItemAmount()-1);
 
+            entityManager.merge(ivanProduct);
             entityManager.getTransaction().commit();
         }
 
@@ -46,7 +60,7 @@ public class OptimisticLocking {
 
         entityManager.getTransaction().begin();
 
-        Product product = entityManager.find(Product.class, 1L);
+        DetachedProblemSolution_2_.Product product = entityManager.find(DetachedProblemSolution_2_.Product.class, 1L);
         System.out.println(product.getItemAmount());
         System.out.println(product.getLastUpdater());
     }
@@ -54,7 +68,7 @@ public class OptimisticLocking {
     private static void saveData(EntityManager entityManager) {
         entityManager.getTransaction().begin();
 
-        Product product = new Product("item 1");
+        DetachedProblemSolution_2_.Product product = new DetachedProblemSolution_2_.Product("item 1");
         entityManager.persist(product);
 
         entityManager.getTransaction().commit();
@@ -62,18 +76,20 @@ public class OptimisticLocking {
 
     @Entity
     @Table(name = "product")
+    @DynamicUpdate
+    @OptimisticLocking(type = OptimisticLockType.DIRTY)
+    @SelectBeforeUpdate
     private static class Product {
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
         private Long id;
 
+        private String name = "Product";
+
         private String lastUpdater;
 
         private Integer itemAmount = 5;
-
-        @Version
-        private Integer version;
 
         public Product() {
         }
@@ -88,6 +104,14 @@ public class OptimisticLocking {
 
         public void setId(Long id) {
             this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
 
         public String getLastUpdater() {

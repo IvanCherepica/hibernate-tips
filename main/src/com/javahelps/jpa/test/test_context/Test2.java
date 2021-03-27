@@ -100,8 +100,7 @@ public class Test2 {
             if (o == null || getClass() != o.getClass()) return false;
             Post post = (Post) o;
             return Objects.equals(id, post.id) &&
-                    Objects.equals(title, post.title) &&
-                    Objects.equals(tags, post.tags);
+                    Objects.equals(title, post.title);
         }
 
         @Override
@@ -164,8 +163,7 @@ public class Test2 {
             if (o == null || getClass() != o.getClass()) return false;
             Tag tag = (Tag) o;
             return Objects.equals(id, tag.id) &&
-                    Objects.equals(name, tag.name) &&
-                    Objects.equals(posts, tag.posts);
+                    Objects.equals(name, tag.name);
         }
 
         @Override
