@@ -40,10 +40,6 @@ public class LostUpdate {
 
         Runnable r = ()->{
 //            Пока Иван меняет данные - врывается Антон и забирает все 5 имеющихся единиц товара
-
-            Map<String, Object> properties1 = new HashMap<>();
-            properties1.put("javax.persistence.lock.timeout", 10L);
-
             EntityManager entityManager2 = PersistentHelper.getEntityManager(new Class[] {Product.class});
             EntityTransaction transaction2 = entityManager2.getTransaction();
             transaction2.begin();
