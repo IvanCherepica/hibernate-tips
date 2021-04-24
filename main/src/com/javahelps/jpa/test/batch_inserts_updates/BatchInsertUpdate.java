@@ -1,8 +1,6 @@
 package com.javahelps.jpa.test.batch_inserts_updates;
 
-import com.javahelps.jpa.test.test_context.Test2;
 import com.javahelps.jpa.test.util.PersistentHelper;
-import com.sun.org.glassfish.external.statistics.Statistic;
 import org.hibernate.Session;
 import org.hibernate.stat.Statistics;
 

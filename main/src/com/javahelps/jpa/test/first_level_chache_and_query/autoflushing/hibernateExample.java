@@ -12,6 +12,7 @@ public class hibernateExample {
         EntityManager entityManager = PersistentHelper.getEntityManager(new Class[] {Post.class, PostComment.class});
 
         Session session = (Session) entityManager.getDelegate();
+        session.beginTransaction();
 
         saveObjects(entityManager);
         entityManager.clear();
