@@ -1,7 +1,6 @@
 package com.javahelps.jpa.test.one_to_many.bidirectional;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
-import javafx.geometry.Pos;
 
 import javax.persistence.*;
 import java.util.ArrayList;

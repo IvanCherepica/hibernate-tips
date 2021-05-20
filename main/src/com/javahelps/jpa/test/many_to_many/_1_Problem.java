@@ -1,8 +1,6 @@
 package com.javahelps.jpa.test.many_to_many;
 
 import com.javahelps.jpa.test.util.PersistentHelper;
-import javafx.geometry.Pos;
-import org.hibernate.annotations.NaturalId;
 
 import javax.persistence.*;
 import java.util.ArrayList;
