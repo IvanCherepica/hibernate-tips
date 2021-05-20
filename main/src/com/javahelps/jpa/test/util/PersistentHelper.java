@@ -3,6 +3,8 @@ package com.javahelps.jpa.test.util;
 import com.javahelps.jpa.test.PersistenceUnitInfoImpl;
 import com.javahelps.jpa.test.model.Post;
 import com.javahelps.jpa.test.model.PostComment;
+import org.hibernate.Interceptor;
+import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import javax.persistence.EntityManager;
@@ -16,7 +18,7 @@ import static org.hibernate.cfg.AvailableSettings.*;
 
 public class PersistentHelper {
 
-    private static final DB USED_DB = DB.MYSQL;
+    private static final DB USED_DB = DB.POSTGRESQL;
 
     private static final Map<String, Object> options = new HashMap<>();
     private static EntityManager entityManager;
@@ -88,5 +90,9 @@ public class PersistentHelper {
 
     public static void setIsolationLevel(IsolationLevel isolationLevel) {
         options.put("hibernate.connection.isolation", isolationLevel.getValue());
+    }
+
+    public static void setInterceptor(Interceptor interceptor) {
+        options.put(AvailableSettings.INTERCEPTOR, interceptor);
     }
 }
